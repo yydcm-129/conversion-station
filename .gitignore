@@ -1,0 +1,9 @@
+# 用户卡片衍生测试输出默认不上传
+test-output/*.json
+
+# 常见系统与编辑器文件
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+
