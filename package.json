@@ -1,10 +1,9 @@
 {
   "name": "conversion-station",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "private": true,
   "description": "RP-Hub character card to Moyun settings converter",
   "scripts": {
     "test": "node tests/verify-output.mjs"
   }
 }
-
