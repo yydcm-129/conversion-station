@@ -2,6 +2,15 @@
 
 ## v0.0.3 — 2026-07-18
 
+- 在版本号不变的前提下完成完整兼容补充：SillyTavern V1/V2/V3、TavernAI、RP-Hub、RisuAI、Agnai 的主流公开 JSON/PNG 导出结构。
+- PNG 元数据读取改为优先 `ccv3`、其次 `chara`，并兼容 `tEXt`、`zTXt`、压缩/未压缩 `iTXt` 及通用 JSON/Base64 文本块兜底。
+- 新增标准 Base64、Base64URL、自动补 padding、多层 `data/card/character` 和字符串化 JSON 包装解析。
+- 扩充名字、描述、人格、开场、备选开场、场景、示例对话、世界书及世界书条目字段别名。
+- 兼容世界书数组、对象映射、单条对象及 `entries/items/data/lore/loreEntries/worldEntries` 容器。
+- 无世界书的简单卡会生成一个可复核的虚拟人物条目；`alternate_greetings` 可在主开场为空时补作第一章开场。
+- 场景写入世界观，示例对话写入 Moyun `exampleDialogues`，但不生成正文、大纲、细纲或总结。
+- 普通 PNG 会显示“没有找到 chara / ccv3 角色数据”的明确提示，不再给出含糊的 JSON 错误。
+- 新增自动兼容矩阵，覆盖 V1/V2/V3、RisuAI、Agnai、Base64URL、对象世界书以及 `tEXt/zTXt/iTXt` PNG。
 - 新增 RP-Hub、Tavern V2/V3 与 `chara` / `ccv3` 来源类型显示。
 - 新增“人物名+设定”后缀识别，修正人物条目被归入剧情素材的问题。
 - 新增复合 personality 人物段落拆分，避免把多个角色全部塞入“主角”。

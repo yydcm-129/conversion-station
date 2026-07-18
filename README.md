@@ -2,13 +2,17 @@
 
 当前版本：`v0.0.3`
 
-`转换空间站.html` 是一个自包含、无需安装依赖的浏览器工具，用于把 RP-Hub / Tavern V2 兼容角色卡中的人物和世界观设定转换为 Moyun 可导入的小说 JSON。
+`转换空间站.html` 是一个自包含、无需安装依赖的浏览器工具，用于把 SillyTavern V1/V2/V3、TavernAI、RP-Hub、RisuAI、Agnai 等主流酒馆生态角色卡中的人物和世界观设定转换为 Moyun 可导入的小说 JSON。
 
 ## 主要能力
 
-- 导入 `.json` 角色卡。
-- 解析 PNG 中的 `chara`、`ccv3`、`tEXt`、`iTXt` 和 `zTXt` 文本块。
-- 自动显示 `RP-Hub PNG · chara`、RP-Hub JSON、Tavern V2/V3 等识别类型。
+- 导入单个 `.json` 或带角色元数据的 `.png` 角色卡。
+- 解析 PNG 中 `tEXt`、`zTXt`、压缩/未压缩 `iTXt` 文本块里的 `chara`、`ccv3` 或其他 JSON/Base64 角色数据。
+- 兼容标准 Base64、Base64URL、缺失 padding、多层 `data/card/character` 包装及字符串化 JSON 包装。
+- 自动显示 RP-Hub、RisuAI、Agnai、SillyTavern V2/V3、Tavern 兼容卡及 PNG 元数据来源。
+- 兼容常见名字、描述、人格、开场、备选开场、场景、示例对话和世界书字段别名。
+- 兼容世界书数组、对象映射、单条对象及 `entries/items/data/lore` 等容器变体。
+- 无世界书的简单卡会从人物描述与人格生成一个可复核的人物设定条目。
 - 自动把世界书条目初分为世界观、人物、剧情素材、资料库、规则/机制、UI/格式。
 - 识别“代号103设定”“某某角色设定”等“人物名+设定”条目，不再误归为剧情素材。
 - 可从复合 personality 中拆分多个人物，并从交友圈、人物关系等条目中保守提取嵌套角色。
@@ -28,7 +32,7 @@
 
 1. 双击打开 `转换空间站.html`。现代浏览器可直接使用；若浏览器限制本地文件功能，也可通过任意静态网站托管。
 2. 如需 AI，可先点击右上角设置图标，填写地址、密钥并获取模型；也可以完全跳过。
-3. 导入一张 RP-Hub 同类型 `.png` 或 `.json` 角色卡。
+3. 导入一张受支持的主流酒馆 `.png` 或 `.json` 角色卡。
 4. 点击顶部四个阶段切换页面，检查自动分类结果，只勾选需要保留的设定。
 5. 选择本地转换，或使用已配置的 AI 整理。
 6. 检查书名、简介、世界观、角色数组和第一章开场白。
@@ -61,9 +65,11 @@ https://cdn.sta1n.cn/v1
 
 - `转换空间站.html`：可直接使用的单文件应用。
 - `CHANGELOG.md`：版本变更记录。
+- `COMPATIBILITY_GUIDE_v0.0.3.md`：主流酒馆角色卡格式、字段映射、限制与安全边界说明。
 - `TEST_REPORT_v0.0.1.md`：首版验收报告。
 - `TEST_REPORT_v0.0.2.md`：上一版浏览器、角色卡、API、移动端与 Moyun 导入报告。
 - `TEST_REPORT_v0.0.3.md`：新增 RP-Hub `chara` 卡类型和人物拆分回归报告。
+- `TEST_REPORT_v0.0.3_FULL_COMPAT.md`：完整酒馆兼容矩阵、API、移动端与 Moyun 原生导入验收报告。
 - `tests/verify-output.mjs`：HTML 与生成 JSON 的结构检查脚本。
 - `test-output/`：本地测试产物目录，其中 JSON 默认不加入 Git。
 
