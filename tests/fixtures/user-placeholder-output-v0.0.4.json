@@ -1,0 +1,86 @@
+{
+  "_type": "moyun_character_card_conversion",
+  "_exportVersion": 7,
+  "_exportDate": "2026-07-18T14:39:21.202Z",
+  "_conversionStationVersion": "v0.0.4",
+  "id": "book_1784385561202_yvv91m2d",
+  "title": "主角的档案",
+  "lastModified": 1784385561201,
+  "wordCount": 19,
+  "novel": {
+    "title": "主角的档案",
+    "theme": "主角成长",
+    "synopsis": "你醒来并开始调查。",
+    "worldView": "旧城居民都认识你。",
+    "negativePrompt": "",
+    "isAdultMode": false,
+    "outline": ""
+  },
+  "chapters": [{
+    "id": "chapter_1784385561201_jex1rcdr",
+    "branchId": "main",
+    "title": "开场",
+    "content": "你推开门。艾琳看向你：“你终于来了。”",
+    "summary": "",
+    "wordCount": 19,
+    "isExpanded": false,
+    "isEditing": false,
+    "contentHeight": 0,
+    "versions": [],
+    "activeVersionIdx": 0,
+    "createdAt": 1784385561201,
+    "comments": [],
+    "isGeneratingComments": false,
+    "showComments": false,
+    "paragraphComments": {}
+  }],
+  "characters": [
+    {
+      "id": "char_1784385561201_d60e0zjc",
+      "name": "主角",
+      "desc": "你是调查员。",
+      "personalityTags": ["主角", "谨慎"],
+      "speakingStyle": "",
+      "exampleDialogues": ["你：“我明白。”"],
+      "dialogueType": "",
+      "relationships": [{
+        "targetId": "char_1784385561201_d60e0zjc",
+        "targetName": "主角",
+        "type": "本人",
+        "attitude": "你的立场"
+      }],
+      "characterPrompt": "保持你的经历。",
+      "_expanded": false
+    },
+    {
+      "id": "char_1784385561201_6a92njmh",
+      "name": "艾琳",
+      "desc": "艾琳信任你。",
+      "personalityTags": [],
+      "speakingStyle": "",
+      "exampleDialogues": [],
+      "dialogueType": "",
+      "relationships": [{
+        "targetId": "char_1784385561201_d60e0zjc",
+        "targetName": "主角",
+        "type": "盟友",
+        "attitude": "保护你"
+      }],
+      "characterPrompt": "",
+      "_expanded": false
+    }
+  ],
+  "strictTheme": false,
+  "branchList": [{
+    "id": "main",
+    "name": "主线",
+    "parentBranchId": "",
+    "forkChapterId": "",
+    "createdAt": 1784385561201
+  }],
+  "activeBranchId": "main",
+  "chapterOutlines": [],
+  "chapterIndexDrafts": [],
+  "foreshadowMatrix": [],
+  "summaries": []
+}

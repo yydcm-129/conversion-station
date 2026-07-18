@@ -1,8 +1,8 @@
 {
   "name": "conversion-station",
-  "version": "0.0.3",
+  "version": "0.0.4",
   "private": true,
-  "description": "RP-Hub character card to Moyun settings converter",
+  "description": "Mainstream Tavern character card to Moyun settings converter with player-placeholder normalization",
   "scripts": {
     "test": "node tests/verify-output.mjs"
   }
