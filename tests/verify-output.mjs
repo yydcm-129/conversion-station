@@ -6,7 +6,7 @@ import { fileURLToPath } from 'node:url';
 const here = path.dirname(fileURLToPath(import.meta.url));
 const root = path.resolve(here, '..');
 const htmlPath = path.join(root, '转换空间站.html');
-const defaultOutput = path.join(root, 'tests', 'fixtures', 'ui-package-output-v0.0.5.json');
+const defaultOutput = path.join(root, 'tests', 'fixtures', 'story-outline-output-v0.0.6.json');
 const outputPath = process.argv[2] ? path.resolve(process.argv[2]) : defaultOutput;
 
 function assert(condition, message) {
@@ -20,7 +20,7 @@ assert(scriptStart >= 0 && scriptEnd > scriptStart, 'HTML 中没有找到内联�
 const script = html.slice(scriptStart + '<script>'.length, scriptEnd);
 new Function(script);
 
-assert(html.includes("const VERSION='v0.0.5'"), 'HTML 版本号不是 v0.0.5');
+assert(html.includes("const VERSION='v0.0.6'"), 'HTML 版本号不是 v0.0.6');
 assert(html.includes('SillyTavern V1 / V2 / V3'), '界面没有声明主流酒馆卡兼容范围');
 assert(html.includes('TavernAI、RP-Hub、RisuAI、Agnai'), '界面没有声明平台兼容范围');
 assert(html.includes("payloadKey=chunks.ccv3?'ccv3':chunks.chara?'chara'"), 'PNG 没有优先识别 ccv3 / chara');
@@ -40,7 +40,9 @@ assert(html.includes('text/event-stream') && html.includes('ndjson'), '缺少常
 assert(html.includes('contentText') && html.includes('deltaText'), '缺少字符串与数组增量内容兼容');
 assert(html.includes('{stream:false,jsonMode:false}'), '缺少非流式兼容回退');
 assert(html.includes('response_format'), '缺少 AI JSON 输出设置');
-assert(html.includes("outline:''"), '输出没有强制保持空大纲');
+assert(html.includes("outline:normalizeNarrative($('outline').value)"), '输出没有读取故事大纲');
+assert(html.includes('storyPolicy') && html.includes('storyEntries') && html.includes('outline, characters'), 'AI 提示词没有支持来源剧情大纲');
+assert(html.includes('不得续写正文') && html.includes('不生成细纲'), 'AI 大纲约束不完整');
 assert(html.includes('“”「」『』〖〗'), 'AI 约束没有要求保留原始对话符号');
 assert(html.includes('绝不是真实人名') && html.includes('placeholderPolicy'), 'AI 提示词缺少玩家占位符规则');
 assert(html.includes('sanitizeOutputValue(rawOutput)'), '最终输出没有执行占位符兜底清理');
@@ -49,11 +51,16 @@ assert(html.includes('id="uiPreviewModal"') && html.includes('id="downloadUiPack
 assert(html.includes('sandbox=""') && html.includes("script-src 'none'"), 'UI 预览没有禁用脚本');
 assert(html.includes("connect-src 'none'") && html.includes('externalNetworkAllowed:false'), 'UI 预览没有禁止外部网络');
 assert(html.includes("entry.type!=='ui'"), 'AI 材料没有强制排除 UI 条目');
+assert(html.includes('id="storyCard"') && html.includes('id="includeStoryOutline"'), '缺少剧情识别或 AI 大纲开关');
+assert(html.includes('id="remoteNotice"') && html.includes('detectRemoteInfo'), '缺少远程依赖角色卡提示');
+assert(html.includes('无法转换：该卡依赖远程服务器') && html.includes('state.remoteInfo.dependent'), '远程依赖卡没有阻止转换');
+assert(html.includes('id="exportFormat"') && html.includes('settings-json') && html.includes('custom-text'), '缺少多格式或自定义文本导出');
+assert(html.includes('matches.slice(0,500)'), '超大型世界书没有限制一次渲染数量');
 const savedApiSettings = html.match(/localStorage\.setItem\('conversionStationApi',JSON\.stringify\((\{[^)]*\})\)\)/)?.[1] || '';
 assert(savedApiSettings && !/apiKey|\bkey\b/.test(savedApiSettings), 'API Key 可能被写入 localStorage');
 assert(!/sk-[A-Za-z0-9_-]{12,}|ghp_[A-Za-z0-9]{20,}|github_pat_[A-Za-z0-9_]{20,}|AKIA[0-9A-Z]{16}|BEGIN (?:RSA |EC |OPENSSH )?PRIVATE KEY/.test(html), 'HTML 中发现疑似硬编码密钥');
 assert(!html.includes('不会修改文件、不执行正则'), '页面仍包含已要求删除的解释文字');
-assert(/<footer[^>]*>\s*<span[^>]*>v0\.0\.5<\/span>\s*·\s*制作者：yydcm129\s*<\/footer>/.test(html), '页脚内容不符合要求');
+assert(/<footer[^>]*>\s*<span[^>]*>v0\.0\.6<\/span>\s*·\s*制作者：yydcm129\s*<\/footer>/.test(html), '页脚内容不符合要求');
 
 function extractFunction(name) {
   const lines = script.split(/\r?\n/);
@@ -77,9 +84,11 @@ const helperNames = [
   'layerValue', 'mergedLayerObject', 'byteText', 'readU32', 'inflate',
   'readPngText', 'decodeB64Utf8', 'parseCardPayload', 'parsePng', 'entryLike',
   'bookEntries', 'normalizeBookEntry', 'normalizeCard', 'detectCardType', 'makeUiPackage',
-  'uiPackageItems', 'escapeHtml', 'buildUiPreviewDocument', 'normalizeAiCharacter'
+  'uiPackageItems', 'escapeHtml', 'buildUiPreviewDocument', 'storyScore', 'detectStoryInfo',
+  'safeHttpUrl', 'collectRemoteLinks', 'detectRemoteInfo', 'applyRecommendationBudget',
+  'characterName', 'readableKeyword', 'looksLikeCardMeta', 'normalizeAiCharacter'
 ];
-const helpers = new Function(`const VERSION='v0.0.5'; const uiWords=/样式|UI|面板|输出规范|格式规范|状态栏|美化|正则|regex|HTML|CSS|脚本|模板|协议|容器/i;\n${helperNames.map(extractFunction).join('\n')}\nreturn {${helperNames.join(',')}};`)();
+const helpers = new Function(`const VERSION='v0.0.6'; const uiWords=/样式|UI|面板|输出规范|格式规范|状态栏|美化|正则|regex|HTML|CSS|脚本|模板|协议|容器/i; const mechanicWords=/数值|调度|结局|节点|事件库|触发|机制|规则/i; const plotPrefixWords=/(?:^|[|_])(?:MAIN_SPLIT|MAIN_PLOT|PLOT|STORY_OUTLINE|STORYLINE|CHAPTER_FLOW|CAMPAIGN|QUESTLINE)(?:[|_]|$)/i; const plotTitleWords=/整体主线大纲|主线大纲|故事大纲|剧情大纲|剧情总纲|章节流程总览|章节运行|章节大纲|战役大纲|篇章大纲|主线阶段|主线推进表|剧情阶段表/i; const plotChapterWords=/(?:序章|终章|第[一二三四五六七八九十百零\\d]+章)[：:·\\s_-].*(?:章节运行|剧情|大纲|流程|阶段)/i; const plotTemplateWords=/模板|助手|生成器|写作指南|格式规范|输出规范|提示词|占位符|正则/i; const remoteWords=/远程版|远程加载|联网远程|在线加载|服务器读取|实时读取数据|空壳角色卡|强需求联机|云端世界书|remote\\s*(?:card|loader|manifest)/i; const structuredCharacterWords=/^(?:[A-Z0-9]+_)?(?:NPC|CHAR|CHARACTER|COMPANION)[|_]/i;\n${helperNames.map(extractFunction).join('\n')}\nreturn {${helperNames.join(',')}};`)();
 
 const nested = { data: JSON.stringify({ data: { name: '字符串包装角色', initialMessage: '字符串包装开场' } }) };
 assert(helpers.cardLayers(nested).length === 3, '多层 data / JSON 字符串包装未展开');
@@ -250,6 +259,44 @@ const previewDocument = helpers.buildUiPreviewDocument(previewItems[0]);
 assert(previewDocument.includes("default-src 'none'") && previewDocument.includes("script-src 'none'"), 'UI 预览 CSP 不完整');
 assert(previewDocument.includes("connect-src 'none'") && !previewDocument.includes('fetch("https://example.com")'), 'UI 预览仍可能执行脚本或访问网络');
 
+const storyEntries = [
+  { comment: 'BG4_MAIN_SPLIT|0001|整体主线大纲 - 速查', content: '# 整体主线\n## 故事起点\n亡灵天灾开始。', enabled: true, length: 31, plotScore: 15, plotCore: true, type: 'story' },
+  { comment: 'BG4_MAIN_SPLIT|0002|第一章：亡灵天灾 - 章节运行', content: '# 第一章\n玩家调查墓地。', enabled: true, length: 20, plotScore: 16, plotCore: true, type: 'story' },
+  { comment: 'BG4_WORLD|0003|阿贝尔托瑞尔 - 剧情连接', content: '这里是世界资料，不是故事大纲。', enabled: true, length: 16, plotScore: -2, plotCore: false, type: 'world' },
+  { comment: 'ENG-L·关键剧情节点模板', content: '用于生成剧情节点的模板。', enabled: true, length: 14, plotScore: -6, plotCore: false, type: 'mechanics' }
+];
+assert(helpers.storyScore(storyEntries[0]) >= 6 && helpers.storyScore(storyEntries[1]) >= 6, '明确主线/章节大纲没有被识别');
+assert(helpers.storyScore(storyEntries[2]) < 6, '普通世界资料“剧情连接”被误识别为故事大纲');
+assert(helpers.storyScore(storyEntries[3]) < 6, '剧情模板被误识别为真实故事大纲');
+const storyInfo = helpers.detectStoryInfo(storyEntries);
+assert(storyInfo.entries.length === 2, '剧情大纲统计不正确');
+const recommendedStories = helpers.applyRecommendationBudget(storyEntries.map(entry => ({ ...entry, selected: false, recommended: false })));
+assert(recommendedStories.filter(entry => entry.plotCore && entry.selected).length === 2, '高置信度剧情没有优先推荐');
+assert(helpers.characterName('BG4_NPC|0743|莫恩 - 身份速查') === '莫恩', '结构化 NPC 分片没有还原真实人物名');
+assert(helpers.characterName('BG4_COMPANION|0001|尼洛·雀步 - 成长分支与个人线状态') === '尼洛·雀步', '结构化同伴分片没有合并人物名');
+assert(helpers.readableKeyword('莫恩') && !helpers.readableKeyword('莫恩.{0') && !helpers.readableKeyword('24}莫恩'), '正则碎片仍可能进入主题关键词');
+assert(helpers.looksLikeCardMeta('本卡收录13000条世界书内容。'), '大型角色卡简介没有识别为卡片说明');
+
+const remoteCard = helpers.normalizeCard({
+  name: '远程测试卡',
+  description: '本卡为联网远程版本，只留下空壳角色卡，实时读取数据。',
+  first_mes: '远程开场标记',
+  extensions: {
+    bg4_remote: {
+      baseUrl: 'https://example.invalid/bg4/',
+      releaseUrl: 'https://example.invalid/bg4/release.json',
+      releaseSha256: '5b9697d9056d2e384e8fc2fff8eb1f16593a6aaf2915bf5f265feeb0b7a583c7',
+      ui: { character: { url: 'ui/character.html' } }
+    }
+  }
+});
+const remoteInfo = helpers.detectRemoteInfo(remoteCard);
+assert(remoteCard.sourceEntryCount === 0, '远程空壳卡的本地世界书数量不正确');
+assert(remoteInfo.dependent === true, '远程依赖角色卡没有被识别');
+assert(remoteInfo.links.includes('https://example.invalid/bg4/release.json'), '远程 release 地址没有提取');
+assert(remoteInfo.links.includes('https://example.invalid/bg4/ui/character.html'), '远程相对资源地址没有解析');
+assert(!remoteInfo.links.some(url => url.includes('5b9697d9056d2e384e8fc2fff8eb1f165')), '远程 SHA-256 被误识别为网页地址');
+
 function pngChunk(type, data) {
   const typeBytes = Buffer.from(type, 'ascii');
   const length = Buffer.alloc(4);
@@ -322,9 +369,9 @@ const acceptedByMoyunResolver = !!(
 );
 
 assert(acceptedByMoyunResolver, '不满足 Moyun resolveImportedBookData 的接收条件');
-assert(output._conversionStationVersion === 'v0.0.5', '转换器版本字段不正确');
+assert(output._conversionStationVersion === 'v0.0.6', '转换器版本字段不正确');
 assert(output.novel && typeof output.novel === 'object', '缺少 novel');
-assert(output.novel.outline === '', 'novel.outline 必须为空');
+assert(typeof output.novel.outline === 'string' && output.novel.outline.includes('亡灵天灾'), '角色卡剧情大纲没有写入 novel.outline');
 assert(Array.isArray(output.chapterOutlines) && output.chapterOutlines.length === 0, 'chapterOutlines 必须为空');
 assert(Array.isArray(output.chapterIndexDrafts) && output.chapterIndexDrafts.length === 0, 'chapterIndexDrafts 必须为空');
 assert(Array.isArray(output.foreshadowMatrix) && output.foreshadowMatrix.length === 0, 'foreshadowMatrix 必须为空');
@@ -344,4 +391,4 @@ assert(!/\{\{\s*user\s*\}\}|\{\s*user\s*\}|<\s*user\s*>|\[\s*user\s*\]|\$\{\s*us
 const names = output.characters.map(character => String(character.name || '').trim()).filter(Boolean);
 assert(new Set(names).size === names.length, '角色名存在重复');
 
-console.log(`PASS Moyun JSON：${output.chapters.length} 章，${output.characters.length} 角色，世界观 ${output.novel.worldView.length} 字符`);
+console.log(`PASS Moyun JSON：${output.chapters.length} 章，${output.characters.length} 角色，大纲 ${output.novel.outline.length} 字符`);
