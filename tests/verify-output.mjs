@@ -6,7 +6,7 @@ import { fileURLToPath } from 'node:url';
 const here = path.dirname(fileURLToPath(import.meta.url));
 const root = path.resolve(here, '..');
 const htmlPath = path.join(root, '转换空间站.html');
-const defaultOutput = path.join(root, 'tests', 'fixtures', 'user-placeholder-output-v0.0.4.json');
+const defaultOutput = path.join(root, 'tests', 'fixtures', 'ui-package-output-v0.0.5.json');
 const outputPath = process.argv[2] ? path.resolve(process.argv[2]) : defaultOutput;
 
 function assert(condition, message) {
@@ -20,7 +20,7 @@ assert(scriptStart >= 0 && scriptEnd > scriptStart, 'HTML 中没有找到内联�
 const script = html.slice(scriptStart + '<script>'.length, scriptEnd);
 new Function(script);
 
-assert(html.includes("const VERSION='v0.0.4'"), 'HTML 版本号不是 v0.0.4');
+assert(html.includes("const VERSION='v0.0.5'"), 'HTML 版本号不是 v0.0.5');
 assert(html.includes('SillyTavern V1 / V2 / V3'), '界面没有声明主流酒馆卡兼容范围');
 assert(html.includes('TavernAI、RP-Hub、RisuAI、Agnai'), '界面没有声明平台兼容范围');
 assert(html.includes("payloadKey=chunks.ccv3?'ccv3':chunks.chara?'chara'"), 'PNG 没有优先识别 ccv3 / chara');
@@ -44,8 +44,16 @@ assert(html.includes("outline:''"), '输出没有强制保持空大纲');
 assert(html.includes('“”「」『』〖〗'), 'AI 约束没有要求保留原始对话符号');
 assert(html.includes('绝不是真实人名') && html.includes('placeholderPolicy'), 'AI 提示词缺少玩家占位符规则');
 assert(html.includes('sanitizeOutputValue(rawOutput)'), '最终输出没有执行占位符兜底清理');
+assert(html.includes('id="previewSelected"') && html.includes('id="entryPreviewModal"'), '缺少筛选条目预览功能');
+assert(html.includes('id="uiPreviewModal"') && html.includes('id="downloadUiPackage"'), '缺少 UI 包预览或下载功能');
+assert(html.includes('sandbox=""') && html.includes("script-src 'none'"), 'UI 预览没有禁用脚本');
+assert(html.includes("connect-src 'none'") && html.includes('externalNetworkAllowed:false'), 'UI 预览没有禁止外部网络');
+assert(html.includes("entry.type!=='ui'"), 'AI 材料没有强制排除 UI 条目');
+const savedApiSettings = html.match(/localStorage\.setItem\('conversionStationApi',JSON\.stringify\((\{[^)]*\})\)\)/)?.[1] || '';
+assert(savedApiSettings && !/apiKey|\bkey\b/.test(savedApiSettings), 'API Key 可能被写入 localStorage');
+assert(!/sk-[A-Za-z0-9_-]{12,}|ghp_[A-Za-z0-9]{20,}|github_pat_[A-Za-z0-9_]{20,}|AKIA[0-9A-Z]{16}|BEGIN (?:RSA |EC |OPENSSH )?PRIVATE KEY/.test(html), 'HTML 中发现疑似硬编码密钥');
 assert(!html.includes('不会修改文件、不执行正则'), '页面仍包含已要求删除的解释文字');
-assert(/<footer[^>]*>\s*<span[^>]*>v0\.0\.4<\/span>\s*·\s*制作者：yydcm129\s*<\/footer>/.test(html), '页脚内容不符合要求');
+assert(/<footer[^>]*>\s*<span[^>]*>v0\.0\.5<\/span>\s*·\s*制作者：yydcm129\s*<\/footer>/.test(html), '页脚内容不符合要求');
 
 function extractFunction(name) {
   const lines = script.split(/\r?\n/);
@@ -61,14 +69,17 @@ function extractFunction(name) {
 }
 
 const helperNames = [
-  'safeText', 'makeId', 'arrayValues', 'scalarValues', 'keywordValues',
+  'safeText', 'makeId', 'arrayValues', 'scalarValues', 'keywordValues', 'cloneJson',
+  'stripCodeFence', 'uiTemplateValues', 'regexScriptValues', 'normalizeUiTemplateItem',
+  'normalizeUiRegexItem', 'isUiRelatedRegex',
   'containsUserPlaceholder', 'isUserPlaceholder', 'replaceUserPlaceholder',
   'normalizeNarrative', 'normalizeEntityText', 'isPlayerEntityAlias', 'normalizeEntityName', 'sanitizeOutputValue', 'cardLayers',
   'layerValue', 'mergedLayerObject', 'byteText', 'readU32', 'inflate',
   'readPngText', 'decodeB64Utf8', 'parseCardPayload', 'parsePng', 'entryLike',
-  'bookEntries', 'normalizeBookEntry', 'normalizeCard', 'detectCardType', 'normalizeAiCharacter'
+  'bookEntries', 'normalizeBookEntry', 'normalizeCard', 'detectCardType', 'makeUiPackage',
+  'uiPackageItems', 'escapeHtml', 'buildUiPreviewDocument', 'normalizeAiCharacter'
 ];
-const helpers = new Function(`${helperNames.map(extractFunction).join('\n')}\nreturn {${helperNames.join(',')}};`)();
+const helpers = new Function(`const VERSION='v0.0.5'; const uiWords=/样式|UI|面板|输出规范|格式规范|状态栏|美化|正则|regex|HTML|CSS|脚本|模板|协议|容器/i;\n${helperNames.map(extractFunction).join('\n')}\nreturn {${helperNames.join(',')}};`)();
 
 const nested = { data: JSON.stringify({ data: { name: '字符串包装角色', initialMessage: '字符串包装开场' } }) };
 assert(helpers.cardLayers(nested).length === 3, '多层 data / JSON 字符串包装未展开');
@@ -201,6 +212,44 @@ assert(sanitizedOutput.characters[0].name === '主角', '最终角色名占位�
 assert(sanitizedOutput.characters[0].relationships[0].targetName === '主角', '最终人物关系占位符没有清理');
 assert(!helpers.containsUserPlaceholder(JSON.stringify(sanitizedOutput)), '最终结构仍残留玩家占位符');
 
+const uiRawCard = {
+  name: 'UI测试角色',
+  description: '用于测试 UI 包。',
+  first_mes: '测试开场。',
+  uiTemplates: [{
+    id: 'hud',
+    name: '状态面板',
+    htmlTemplate: '<section class="hud"><style>.hud{color:#0ff}</style><h2>状态</h2><script>fetch("https://example.com")</script><img src="https://example.com/a.png"></section>',
+    variables: { hp: 100 }
+  }],
+  extensions: {
+    regex_scripts: [{ name: '正文美化容器', regex: '(.*)', replacement: '<div class="body-card">$1</div>' }]
+  },
+  character_book: {
+    entries: [
+      { comment: '界面样式', content: '<style>.panel{background:#123}</style><div class="panel">UI 面板</div>', keys: ['UI'] },
+      { comment: '世界观', content: '普通世界设定', keys: ['世界'] }
+    ]
+  }
+};
+const normalizedUiCard = helpers.normalizeCard(uiRawCard);
+assert(normalizedUiCard.uiTemplates.length === 1, 'uiTemplates 没有被解析');
+assert(normalizedUiCard.regexes.length === 1, 'UI 相关正则没有保留供独立打包');
+const uiPackage = helpers.makeUiPackage(normalizedUiCard, [
+  { type: 'ui', comment: '界面样式', _rawComment: '界面样式', content: '已规范化内容', _rawContent: '<style>.panel{background:#123}</style><div class="panel">UI 面板</div>', keys: ['UI'], _rawKeys: ['UI'], enabled: true },
+  { type: 'world', comment: '世界观', content: '普通世界设定', keys: ['世界'], enabled: true }
+], 'SillyTavern V2 JSON', 'ui-card.json');
+assert(uiPackage._type === 'conversion_station_ui_package', 'UI 包类型不正确');
+assert(uiPackage.summary.templates === 1 && uiPackage.summary.worldbookEntries === 1 && uiPackage.summary.regexScripts === 1, 'UI 包三类来源统计错误');
+assert(uiPackage.summary.total === 3, 'UI 包总数错误');
+assert(uiPackage.uiEntries[0].content.includes('.panel'), 'UI 包没有保留世界书原始 UI 代码');
+assert(!JSON.stringify(uiPackage).includes('apiKey'), 'UI 包不应包含 API Key 字段');
+const previewItems = helpers.uiPackageItems(uiPackage);
+assert(previewItems.length === 3, 'UI 预览项目数量错误');
+const previewDocument = helpers.buildUiPreviewDocument(previewItems[0]);
+assert(previewDocument.includes("default-src 'none'") && previewDocument.includes("script-src 'none'"), 'UI 预览 CSP 不完整');
+assert(previewDocument.includes("connect-src 'none'") && !previewDocument.includes('fetch("https://example.com")'), 'UI 预览仍可能执行脚本或访问网络');
+
 function pngChunk(type, data) {
   const typeBytes = Buffer.from(type, 'ascii');
   const length = Buffer.alloc(4);
@@ -273,7 +322,7 @@ const acceptedByMoyunResolver = !!(
 );
 
 assert(acceptedByMoyunResolver, '不满足 Moyun resolveImportedBookData 的接收条件');
-assert(output._conversionStationVersion === 'v0.0.4', '转换器版本字段不正确');
+assert(output._conversionStationVersion === 'v0.0.5', '转换器版本字段不正确');
 assert(output.novel && typeof output.novel === 'object', '缺少 novel');
 assert(output.novel.outline === '', 'novel.outline 必须为空');
 assert(Array.isArray(output.chapterOutlines) && output.chapterOutlines.length === 0, 'chapterOutlines 必须为空');
@@ -289,6 +338,7 @@ assert(typeof output.novel.worldView === 'string', 'worldView 必须是字符串
 const serialized = JSON.stringify(output);
 const uiLeak = /<style|<script|\.lige-|regex_scripts|rp_hub_ui_templates|QINGMEI_OPENING_TRANSITION|LIGE_STATE/i.test(serialized);
 assert(!uiLeak, '输出中检测到 UI、正则或状态协议残留');
+assert(!serialized.includes('conversion_station_ui_package') && !serialized.includes('uiTemplates'), 'Moyun 输出混入独立 UI 包');
 assert(!/\{\{\s*user\s*\}\}|\{\s*user\s*\}|<\s*user\s*>|\[\s*user\s*\]|\$\{\s*user\s*\}|(^|[^\w-])user(?:['’]s)?(?=$|[^\w-])/i.test(serialized), '输出中仍存在 user 玩家占位符');
 
 const names = output.characters.map(character => String(character.name || '').trim()).filter(Boolean);

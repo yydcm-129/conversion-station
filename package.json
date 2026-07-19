@@ -1,8 +1,8 @@
 {
   "name": "conversion-station",
-  "version": "0.0.4",
+  "version": "0.0.5",
   "private": true,
-  "description": "Mainstream Tavern character card to Moyun settings converter with player-placeholder normalization",
+  "description": "Tavern character card to Moyun converter with selection preview and isolated UI package export",
   "scripts": {
     "test": "node tests/verify-output.mjs"
   }

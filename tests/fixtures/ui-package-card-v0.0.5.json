@@ -1,0 +1,60 @@
+{
+  "spec": "chara_card_v2",
+  "data": {
+    "name": "UI测试角色",
+    "description": "用于测试筛选预览与独立 UI 包。",
+    "personality": "冷静、谨慎。",
+    "first_mes": "你走进控制室，状态面板在眼前亮起。",
+    "uiTemplates": [
+      {
+        "id": "status-hud",
+        "name": "状态面板",
+        "enabled": true,
+        "placement": "bottom",
+        "htmlTemplate": "<section class=\"hud\"><style>.hud{padding:18px;border-radius:14px;background:#10253c;color:#68e4ff}.hud strong{display:block;font-size:22px}</style><strong>状态面板</strong><span>HP：100</span><script>fetch('https://example.com/leak')</script><img src=\"https://example.com/remote.png\"></section>",
+        "variables": {"hp": 100}
+      }
+    ],
+    "extensions": {
+      "regex_scripts": [
+        {
+          "name": "正文美化容器",
+          "regex": "(.*)",
+          "flags": "g",
+          "replacement": "<div class=\"body-card\" style=\"padding:16px;background:#101d2b;color:#eef\">$1</div>",
+          "placement": [2],
+          "disabled": false
+        },
+        {
+          "name": "普通文本清理",
+          "regex": "DEBUG",
+          "replacement": "",
+          "placement": [2],
+          "disabled": false
+        }
+      ]
+    },
+    "character_book": {
+      "entries": [
+        {
+          "comment": "角色：艾琳",
+          "content": "姓名：艾琳\n身份：控制室管理员\n性格：认真负责。",
+          "keys": ["艾琳"],
+          "enabled": true
+        },
+        {
+          "comment": "控制室世界观",
+          "content": "控制室位于旧城中央，负责监测整座城市的能源。",
+          "keys": ["控制室"],
+          "enabled": true
+        },
+        {
+          "comment": "界面样式",
+          "content": "<style>.panel{padding:14px;border:1px solid #55d9ff;background:#0b1b2e;color:#eef}</style><div class=\"panel\">安全 UI 预览</div>",
+          "keys": ["UI", "面板"],
+          "enabled": true
+        }
+      ]
+    }
+  }
+}
