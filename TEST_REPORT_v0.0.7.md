@@ -31,4 +31,4 @@
 - `git diff --check` 通过，源码敏感字符串扫描通过。
 - v0.0.6 原始副本保留在 `git-backups/project-snapshots/转换空间站-v0.0.6`。
 - 旧 v0.0.7 保留在 `git-backups/deprecated-builds/转换空间站-v0.0.7-旧版-20260721`。
-- 新版重制前标签为 `v0.0.7-pre-rebuild`；正式提交与 Bundle 将在报告通过后创建。
+- 新版重制前标签为 `v0.0.7-pre-rebuild`；正式版本已提交并标记为 `v0.0.7`，正式 Bundle 已通过 `git bundle verify`。
