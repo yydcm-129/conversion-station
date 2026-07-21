@@ -1,6 +1,6 @@
 # 转换空间站
 
-当前版本：`v0.0.6`
+当前版本：`v0.0.7`（从 v0.0.6 干净基线重制）
 
 `转换空间站.html` 是一个自包含、无需安装依赖的浏览器工具，用于把 SillyTavern V1/V2/V3、TavernAI、RP-Hub、RisuAI、Agnai 等主流酒馆生态角色卡中的人物、世界观与已有剧情整理为 Moyun JSON、通用设定 JSON、TXT、Markdown 或自定义文本扩展文件。
 
@@ -100,6 +100,10 @@ https://cdn.sta1n.cn/v1
 - `STORY_REMOTE_GUIDE_v0.0.6.md`：剧情识别、AI 大纲、远程依赖卡和多格式导出说明。
 - `TEST_REPORT_v0.0.6.md`：博德之门完整卡、远程卡、AI、Moyun、多格式和移动端验收报告。
 - `SECURITY_AUDIT_v0.0.6.md`：远程链接、API 材料、密钥与导出安全审计。
+- `REBUILD_NOTES_v0.0.7.md`：本次回滚、旧版本归档和重制范围说明。
+- `TAG_CLASSIFICATION_GUIDE_v0.0.7.md`：主题标签、结构前后缀学习、AI 大纲和模型搜索说明。
+- `TEST_REPORT_v0.0.7.md`：本次自动化、真实角色卡、Moyun 和响应式测试记录。
+- `SECURITY_AUDIT_v0.0.7.md`：本次源码、API、UI 预览与导出安全审计。
 - `tests/verify-output.mjs`：HTML 与生成 JSON 的结构检查脚本。
 - `test-output/`：本地测试产物目录，其中 JSON 默认不加入 Git。
 

@@ -1,6 +1,6 @@
 {
   "name": "conversion-station",
-  "version": "0.0.6",
+  "version": "0.0.7",
   "private": true,
   "description": "Tavern character card converter with story-outline extraction, remote-card detection and multi-format export",
   "scripts": {

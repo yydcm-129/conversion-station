@@ -6,8 +6,16 @@ import { fileURLToPath } from 'node:url';
 const here = path.dirname(fileURLToPath(import.meta.url));
 const root = path.resolve(here, '..');
 const htmlPath = path.join(root, '转换空间站.html');
-const defaultOutput = path.join(root, 'tests', 'fixtures', 'story-outline-output-v0.0.6.json');
+const defaultOutput = path.join(root, 'tests', 'fixtures', 'story-outline-output-v0.0.7.json');
 const outputPath = process.argv[2] ? path.resolve(process.argv[2]) : defaultOutput;
+
+const moyunImportSourcePath = 'F:/yydcm129/Moyun-main/Moyun-main/assets/js/moyun.js';
+const moyunImportSource = fs.existsSync(moyunImportSourcePath) ? fs.readFileSync(moyunImportSourcePath, 'utf8') : '';
+if (moyunImportSource) {
+  assert(moyunImportSource.includes('function handleImportJson'), 'Moyun 导入函数没有找到');
+  assert(moyunImportSource.includes('bookData.novel') && moyunImportSource.includes('bookData.chapters') && moyunImportSource.includes('bookData.characters'), 'Moyun 导入没有读取 novel/chapters/characters');
+  assert(moyunImportSource.includes('bookData.chapterOutlines') && moyunImportSource.includes('bookData.summaries'), 'Moyun 导入字段兼容检查失败');
+}
 
 function assert(condition, message) {
   if (!condition) throw new Error(message);
@@ -20,7 +28,7 @@ assert(scriptStart >= 0 && scriptEnd > scriptStart, 'HTML 中没有找到内联�
 const script = html.slice(scriptStart + '<script>'.length, scriptEnd);
 new Function(script);
 
-assert(html.includes("const VERSION='v0.0.6'"), 'HTML 版本号不是 v0.0.6');
+assert(html.includes("const VERSION='v0.0.7'"), 'HTML 版本号不是 v0.0.7');
 assert(html.includes('SillyTavern V1 / V2 / V3'), '界面没有声明主流酒馆卡兼容范围');
 assert(html.includes('TavernAI、RP-Hub、RisuAI、Agnai'), '界面没有声明平台兼容范围');
 assert(html.includes("payloadKey=chunks.ccv3?'ccv3':chunks.chara?'chara'"), 'PNG 没有优先识别 ccv3 / chara');
@@ -52,6 +60,14 @@ assert(html.includes('sandbox=""') && html.includes("script-src 'none'"), 'UI �
 assert(html.includes("connect-src 'none'") && html.includes('externalNetworkAllowed:false'), 'UI 预览没有禁止外部网络');
 assert(html.includes("entry.type!=='ui'"), 'AI 材料没有强制排除 UI 条目');
 assert(html.includes('id="storyCard"') && html.includes('id="includeStoryOutline"'), '缺少剧情识别或 AI 大纲开关');
+assert(html.includes('id="themeAnalysisCard"') && html.includes('analyzeCardThemes'), '缺少角色卡原始主题标签分析');
+assert(html.includes('themeUtilityWords') && html.includes('creator_notes #标签'), '缺少主题工具词排除或 RP-Hub 标签来源');
+assert(html.includes('learnStructuralClassifications') && html.includes("entry.classificationSource=group.kind"), '缺少前后缀统计学习分类');
+assert(html.includes('id="classificationAnalysisCard"') && html.includes('classificationAnalysisList'), '缺少结构分类结果预览');
+assert(html.includes('id="aiOutline"') && html.includes('requestOutlineAnalysis') && html.includes('hasStory'), '缺少独立 AI 大纲判断功能');
+assert(html.includes('id="modelSearch"') && html.includes('renderModelResults'), '缺少独立模型搜索功能');
+assert(!html.includes('id="apiModel" list='), '当前模型输入仍绑定 datalist，可能继续限制模型浏览');
+assert(html.includes('@media(max-width:520px)') && html.includes('.model-results'), '移动端断点没有覆盖新增模型结果区');
 assert(html.includes('id="remoteNotice"') && html.includes('detectRemoteInfo'), '缺少远程依赖角色卡提示');
 assert(html.includes('无法转换：该卡依赖远程服务器') && html.includes('state.remoteInfo.dependent'), '远程依赖卡没有阻止转换');
 assert(html.includes('id="exportFormat"') && html.includes('settings-json') && html.includes('custom-text'), '缺少多格式或自定义文本导出');
@@ -60,7 +76,7 @@ const savedApiSettings = html.match(/localStorage\.setItem\('conversionStationAp
 assert(savedApiSettings && !/apiKey|\bkey\b/.test(savedApiSettings), 'API Key 可能被写入 localStorage');
 assert(!/sk-[A-Za-z0-9_-]{12,}|ghp_[A-Za-z0-9]{20,}|github_pat_[A-Za-z0-9_]{20,}|AKIA[0-9A-Z]{16}|BEGIN (?:RSA |EC |OPENSSH )?PRIVATE KEY/.test(html), 'HTML 中发现疑似硬编码密钥');
 assert(!html.includes('不会修改文件、不执行正则'), '页面仍包含已要求删除的解释文字');
-assert(/<footer[^>]*>\s*<span[^>]*>v0\.0\.6<\/span>\s*·\s*制作者：yydcm129\s*<\/footer>/.test(html), '页脚内容不符合要求');
+assert(/<footer[^>]*>\s*<span[^>]*>v0\.0\.7<\/span>\s*·\s*制作者：yydcm129\s*<\/footer>/.test(html), '页脚内容不符合要求');
 
 function extractFunction(name) {
   const lines = script.split(/\r?\n/);
@@ -86,9 +102,13 @@ const helperNames = [
   'bookEntries', 'normalizeBookEntry', 'normalizeCard', 'detectCardType', 'makeUiPackage',
   'uiPackageItems', 'escapeHtml', 'buildUiPreviewDocument', 'storyScore', 'detectStoryInfo',
   'safeHttpUrl', 'collectRemoteLinks', 'detectRemoteInfo', 'applyRecommendationBudget',
-  'characterName', 'readableKeyword', 'looksLikeCardMeta', 'normalizeAiCharacter'
+  'characterName', 'readableKeyword', 'looksLikeCardMeta', 'normalizeAiCharacter',
+  'extractHashtags', 'themeTagScore', 'analyzeCardThemes', 'htmlDensity',
+  'plainCharacterText', 'isCharacterContent', 'isCharacterSettingComment',
+  'entrySignalScores', 'classifyEntry', 'structuralTokens', 'learnStructuralClassifications',
+  'modelSearchData', 'outlineRequestBody'
 ];
-const helpers = new Function(`const VERSION='v0.0.6'; const uiWords=/样式|UI|面板|输出规范|格式规范|状态栏|美化|正则|regex|HTML|CSS|脚本|模板|协议|容器/i; const mechanicWords=/数值|调度|结局|节点|事件库|触发|机制|规则/i; const plotPrefixWords=/(?:^|[|_])(?:MAIN_SPLIT|MAIN_PLOT|PLOT|STORY_OUTLINE|STORYLINE|CHAPTER_FLOW|CAMPAIGN|QUESTLINE)(?:[|_]|$)/i; const plotTitleWords=/整体主线大纲|主线大纲|故事大纲|剧情大纲|剧情总纲|章节流程总览|章节运行|章节大纲|战役大纲|篇章大纲|主线阶段|主线推进表|剧情阶段表/i; const plotChapterWords=/(?:序章|终章|第[一二三四五六七八九十百零\\d]+章)[：:·\\s_-].*(?:章节运行|剧情|大纲|流程|阶段)/i; const plotTemplateWords=/模板|助手|生成器|写作指南|格式规范|输出规范|提示词|占位符|正则/i; const remoteWords=/远程版|远程加载|联网远程|在线加载|服务器读取|实时读取数据|空壳角色卡|强需求联机|云端世界书|remote\\s*(?:card|loader|manifest)/i; const structuredCharacterWords=/^(?:[A-Z0-9]+_)?(?:NPC|CHAR|CHARACTER|COMPANION)[|_]/i;\n${helperNames.map(extractFunction).join('\n')}\nreturn {${helperNames.join(',')}};`)();
+const helpers = new Function(`const VERSION='v0.0.7'; const uiWords=/样式|UI|面板|输出(?:内容)?规范|格式规范|生图|绘图提示|状态锚点|状态栏|美化|正则|regex|HTML|CSS|脚本|模板|协议|容器/i; const mechanicWords=/数值|调度|结局|节点|事件库|触发|好感|共鸣|羁绊|心魔|执念|善恶|时钟|系统规则|机制|进度条|倒计时|状态协议|铁律|原则|防OOC|防抢话|信息隔离|叙事规则|文风|描写|判定|黑箱/i; const referenceWords=/档案|资料库|百科|名录|出现顺序|事件顺序|完整主线|事件主线|主线细化|既定历史主线|怪兽|超兽|异生兽|魔女(?:\\s*\\/|$)|使魔|敌人顺序|生物档案|形态与|形态力量|形态分类|来源分类/i; const worldWords=/世界观|世界线|时间线(?:设定)?|时空|闭环|时间锚点|时代背景|历史背景|地理|地点|城市|大学|校园|交友圈|宗门|门派|势力|社会|组织结构|力量体系|修行体系|魔法体系|能量守恒|灵根|境界|寿元|天道因果|多元宇宙|宇宙分区|光之国|见泷原|灵魂宝石|魔女结界|文明/i; const settingTitleWords=/的设定\\s*$/i; const characterSettingWords=/设定(?:[（(][^）)]*[）)])?\\s*$/i; const nonCharacterSettingWords=/世界观|世界线|时间线|时空|大学|校园|交友圈|组织|体系|规则|机制|样式|格式|分支|灾难|场景|地点|社会|背景|路线|事件|主线|结局|资料库|档案/i; const explicitCharacter=/^(?:角色|人物|NPC|情敌)[：:·\\s]+/i; const entityWords=/魔女|使魔|怪兽|超兽|异生兽|魔兽|人工生命|生物档案/i; const plotPrefixWords=/(?:^|[|_])(?:MAIN_SPLIT|MAIN_PLOT|PLOT|STORY_OUTLINE|STORYLINE|CHAPTER_FLOW|CAMPAIGN|QUESTLINE)(?:[|_]|$)/i; const plotTitleWords=/整体主线大纲|主线大纲|故事大纲|剧情大纲|剧情总纲|章节流程总览|章节运行|章节大纲|战役大纲|篇章大纲|主线阶段|主线推进表|剧情阶段表/i; const plotChapterWords=/(?:序章|终章|第[一二三四五六七八九十百零\\d]+章)[：:·\\s_-].*(?:章节运行|剧情|大纲|流程|阶段)/i; const plotTemplateWords=/模板|助手|生成器|写作指南|格式规范|输出规范|提示词|占位符|正则/i; const remoteWords=/远程版|远程加载|联网远程|在线加载|服务器读取|实时读取数据|空壳角色卡|强需求联机|云端世界书|remote\\s*(?:card|loader|manifest)/i; const structuredCharacterWords=/^(?:[A-Z0-9]+_)?(?:NPC|CHAR|CHARACTER|COMPANION)[|_]/i; const themeCategoryWords=/武侠|仙侠|玄幻|奇幻|科幻|末世|都市|校园|历史|古风|江湖|综武|同人|悬疑|推理|冒险|战争|群像|恋爱|纯爱|成人向|R18|跑团|DND|TRPG|角色扮演|互动小说|剧情向|开放世界|高自由度|多线剧情|多结局|克苏鲁|赛博朋克|西幻|东方幻想/i; const themeUtilityWords=/UI|界面|按钮|面板|变量|状态栏|档案页|排行榜|排行|地图|立绘|正则|regex|CSS|HTML|手机|电脑|背包栏|系统流|系统规则|武功系统|战斗系统|数值|模板|协议|提示词|世界书|字数|作者|制作|修复|BUG|版本|V\\d+(?:\\.\\d+)*|百人|千种|张立绘/i;\n${helperNames.map(extractFunction).join('\n')}\nreturn {${helperNames.join(',')}};`)();
 
 const nested = { data: JSON.stringify({ data: { name: '字符串包装角色', initialMessage: '字符串包装开场' } }) };
 assert(helpers.cardLayers(nested).length === 3, '多层 data / JSON 字符串包装未展开');
@@ -157,6 +177,36 @@ const agnai = {
 const agnaiCard = helpers.normalizeCard(agnai);
 assert(helpers.detectCardType(agnai, 'json') === 'Agnai JSON', 'Agnai 类型识别失败');
 assert(agnaiCard.mesExample === 'Agnai示例对话', 'Agnai sampleChat 未识别');
+
+const taggedCard = helpers.normalizeCard({
+  data: {
+    name: '分类测试卡',
+    creator_notes: '#综武 #武侠 #古风 #江湖 #金庸同人 #剧情向RP #开放世界 #可点击UI #变量UI #手机 #武功系统',
+    description: '测试描述'
+  }
+});
+const taggedThemes = helpers.analyzeCardThemes(taggedCard);
+assert(taggedThemes.source === 'RP-Hub creator_notes #标签', 'creator_notes 标签来源没有被识别');
+assert(['综武', '武侠', '古风', '江湖', '金庸同人'].every(tag => taggedThemes.selected.includes(tag)), '核心类型标签没有进入主题');
+assert(!taggedThemes.selected.some(tag => /UI|变量|手机|系统/i.test(tag)), 'UI 或工具词仍进入主题');
+assert(taggedThemes.excluded.some(tag => /UI/.test(tag)) && taggedThemes.excluded.includes('手机'), '工具标签没有进入排除记录');
+
+const actualFourteenJson = 'F:/yydcm129/卡/十四天书V0.9.json';
+const actualFourteenPng = 'F:/yydcm129/卡/十四天书V0.9.png';
+if (fs.existsSync(actualFourteenJson)) {
+  const actualCard = helpers.normalizeCard(JSON.parse(fs.readFileSync(actualFourteenJson, 'utf8')));
+  const actualThemes = helpers.analyzeCardThemes(actualCard);
+  assert(actualCard.sourceEntryCount === 1506, '十四天书 JSON 的世界书条目数不正确');
+  assert(['综武', '武侠', '古风', '江湖'].every(tag => actualThemes.selected.includes(tag)), '十四天书 JSON 没有恢复 RP-Hub 类型标签：'+actualThemes.selected.join('、'));
+  assert(!actualThemes.selected.some(tag => /UI|手机|变量|档案页|排行榜|系统流/i.test(tag)), '十四天书 JSON 主题仍混入工具标签');
+}
+if (fs.existsSync(actualFourteenPng)) {
+  const parsed = await helpers.parsePng(new File([fs.readFileSync(actualFourteenPng)], '十四天书V0.9.png', { type: 'image/png' }));
+  const actualCard = helpers.normalizeCard(parsed.raw);
+  const actualThemes = helpers.analyzeCardThemes(actualCard);
+  assert(actualCard.sourceEntryCount === 1506, '十四天书 PNG 内嵌世界书没有完整解析');
+  assert(actualThemes.selected.includes('综武') && actualThemes.selected.includes('武侠'), '十四天书 PNG 没有恢复主题类别');
+}
 
 const userPlaceholderCard = {
   spec: 'chara_card_v2',
@@ -274,6 +324,27 @@ const recommendedStories = helpers.applyRecommendationBudget(storyEntries.map(en
 assert(recommendedStories.filter(entry => entry.plotCore && entry.selected).length === 2, '高置信度剧情没有优先推荐');
 assert(helpers.characterName('BG4_NPC|0743|莫恩 - 身份速查') === '莫恩', '结构化 NPC 分片没有还原真实人物名');
 assert(helpers.characterName('BG4_COMPANION|0001|尼洛·雀步 - 成长分支与个人线状态') === '尼洛·雀步', '结构化同伴分片没有合并人物名');
+
+const learnedEntries = [
+  { comment: 'QXZ_ARCHIVE|001|甲 - 人物资料', content: '姓名：甲\n身份：游侠\n性格：谨慎', keys: [] },
+  { comment: 'QXZ_ARCHIVE|002|乙 - 人物资料', content: '姓名：乙\n职业：医师\n外貌：清秀', keys: [] },
+  { comment: 'QXZ_ARCHIVE|003|丙 - 同组记录', content: '丙与甲、乙结伴同行。', keys: [] },
+  { comment: 'ONLY_ONCE|001|单次记录', content: '没有类别证据。', keys: [] }
+].map(helpers.classifyEntry);
+const learnedGroups = helpers.learnStructuralClassifications(learnedEntries);
+const learnedPrefix = learnedGroups.find(group => group.value === 'QXZ_ARCHIVE');
+assert(learnedPrefix?.type === 'character' && learnedPrefix.count === 3, '重复陌生前缀没有学得人物分类');
+assert(learnedEntries[2].type === 'character' && /重复学习/.test(learnedEntries[2].classificationSource), '低置信度同组条目没有被结构学习修正');
+assert(learnedEntries[3].type === 'reference' && learnedEntries[3].classificationSource === '本地内容', '单次陌生前缀不应触发分类');
+
+const allModels = ['[公益]DeepSeek', 'gpt-5.2', 'Claude-Sonnet', 'Gemini-Pro'];
+const initialModels = helpers.modelSearchData(allModels, '');
+const searchedModels = helpers.modelSearchData(allModels, 'claude');
+assert(initialModels.visible.length === 4, '已有当前模型名时仍应能浏览完整模型列表');
+assert(searchedModels.matches.length === 1 && searchedModels.matches[0] === 'Claude-Sonnet', '独立模型搜索没有正确筛选完整列表');
+const outlineBody = helpers.outlineRequestBody({ model: 'test-model', temperature: 0.8 }, { storyCandidates: [{ title: '第一章', content: '已有事件' }] }, { stream: false, jsonMode: true });
+assert(outlineBody.temperature === 0.3 && outlineBody.response_format.type === 'json_object', '独立大纲请求参数不正确');
+assert(outlineBody.messages[0].content.includes('不得续写正文') && outlineBody.messages[0].content.includes('outline 必须为空'), '独立大纲提示词缺少防续写或空大纲约束');
 assert(helpers.readableKeyword('莫恩') && !helpers.readableKeyword('莫恩.{0') && !helpers.readableKeyword('24}莫恩'), '正则碎片仍可能进入主题关键词');
 assert(helpers.looksLikeCardMeta('本卡收录13000条世界书内容。'), '大型角色卡简介没有识别为卡片说明');
 
@@ -296,6 +367,23 @@ assert(remoteInfo.dependent === true, '远程依赖角色卡没有被识别');
 assert(remoteInfo.links.includes('https://example.invalid/bg4/release.json'), '远程 release 地址没有提取');
 assert(remoteInfo.links.includes('https://example.invalid/bg4/ui/character.html'), '远程相对资源地址没有解析');
 assert(!remoteInfo.links.some(url => url.includes('5b9697d9056d2e384e8fc2fff8eb1f165')), '远程 SHA-256 被误识别为网页地址');
+
+const actualBg4 = 'F:/yydcm129/卡/博德之门4V1.9.png';
+const actualBg4Remote = 'F:/yydcm129/卡/博德之门4 V1.8远程版.png';
+if (fs.existsSync(actualBg4)) {
+  const parsed = await helpers.parsePng(new File([fs.readFileSync(actualBg4)], '博德之门4V1.9.png', { type: 'image/png' }));
+  const card = helpers.normalizeCard(parsed.raw);
+  const entries = card.entries.map(helpers.classifyEntry);
+  helpers.learnStructuralClassifications(entries);
+  const info = helpers.detectStoryInfo(entries);
+  assert(card.sourceEntryCount >= 13000, '博德之门完整卡没有读取完整本地世界书');
+  assert(info.entries.length >= 42, '博德之门完整卡没有识别原有剧情线');
+}
+if (fs.existsSync(actualBg4Remote)) {
+  const parsed = await helpers.parsePng(new File([fs.readFileSync(actualBg4Remote)], '博德之门4 V1.8远程版.png', { type: 'image/png' }));
+  const info = helpers.detectRemoteInfo(helpers.normalizeCard(parsed.raw));
+  assert(info.dependent && info.links.length > 0, '真实远程卡没有被阻止或没有提取来源地址');
+}
 
 function pngChunk(type, data) {
   const typeBytes = Buffer.from(type, 'ascii');
@@ -369,7 +457,7 @@ const acceptedByMoyunResolver = !!(
 );
 
 assert(acceptedByMoyunResolver, '不满足 Moyun resolveImportedBookData 的接收条件');
-assert(output._conversionStationVersion === 'v0.0.6', '转换器版本字段不正确');
+assert(output._conversionStationVersion === 'v0.0.7', '转换器版本字段不正确');
 assert(output.novel && typeof output.novel === 'object', '缺少 novel');
 assert(typeof output.novel.outline === 'string' && output.novel.outline.includes('亡灵天灾'), '角色卡剧情大纲没有写入 novel.outline');
 assert(Array.isArray(output.chapterOutlines) && output.chapterOutlines.length === 0, 'chapterOutlines 必须为空');
