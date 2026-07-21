@@ -5,6 +5,7 @@
 - API Key 仍只存在当前页面密码输入框，不写入 localStorage、Moyun JSON、通用设定、TXT/Markdown、UI 包或 Git。
 - 模型搜索不联网发送搜索词，只筛选已经由用户指定 API 返回的模型 ID。
 - AI 全量材料和独立大纲材料均排除 UI、HTML、CSS、正则、状态协议、数值面板和工具模板；独立大纲请求只允许回填 outline。
+- 开场中的纯 UI 启动标记会在生成 `state.openingInfo` 时清空，因而不会进入第一章、AI 全量整理材料或 AI 大纲材料；混合开场仅保留标记后的叙事内容。
 - UI 预览保留无脚本 iframe 沙箱，并限制外部连接、脚本、对象和表单动作。
 - 远程角色卡只展示其声明的 HTTP/HTTPS 地址，不自动访问远程服务器，也不把空壳内容导出为小说设定。
 - 已执行源码敏感字符串扫描，未发现 API Key、GitHub Token、AWS Key 或私钥标记。

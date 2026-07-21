@@ -67,6 +67,10 @@ assert(html.includes('id="classificationAnalysisCard"') && html.includes('classi
 assert(html.includes('id="aiOutline"') && html.includes('requestOutlineAnalysis') && html.includes('hasStory'), '缺少独立 AI 大纲判断功能');
 assert(html.includes('id="modelSearch"') && html.includes('renderModelResults'), '缺少独立模型搜索功能');
 assert(!html.includes('id="apiModel" list='), '当前模型输入仍绑定 datalist，可能继续限制模型浏览');
+assert(html.includes('.model-results{display:flex;flex-direction:column') && html.includes('.model-result{display:block;flex:0 0 auto'), '模型结果没有使用不可压缩的纵向列表');
+assert(html.includes('min-height:42px') && html.includes('gap:8px;max-height:300px'), '模型结果行高或间距不足');
+assert(!html.includes("if(!$('apiModel').value&&ids[0])$('apiModel').value=ids[0]"), '获取模型仍会自动选择第一项');
+assert(html.includes('stripOpeningUiMarkers') && html.includes("kind:'ui-trigger'"), '缺少 UI 启动开场识别');
 assert(html.includes('@media(max-width:520px)') && html.includes('.model-results'), '移动端断点没有覆盖新增模型结果区');
 assert(html.includes('id="remoteNotice"') && html.includes('detectRemoteInfo'), '缺少远程依赖角色卡提示');
 assert(html.includes('无法转换：该卡依赖远程服务器') && html.includes('state.remoteInfo.dependent'), '远程依赖卡没有阻止转换');
@@ -109,6 +113,15 @@ const helperNames = [
   'modelSearchData', 'outlineRequestBody'
 ];
 const helpers = new Function(`const VERSION='v0.0.7'; const uiWords=/样式|UI|面板|输出(?:内容)?规范|格式规范|生图|绘图提示|状态锚点|状态栏|美化|正则|regex|HTML|CSS|脚本|模板|协议|容器/i; const mechanicWords=/数值|调度|结局|节点|事件库|触发|好感|共鸣|羁绊|心魔|执念|善恶|时钟|系统规则|机制|进度条|倒计时|状态协议|铁律|原则|防OOC|防抢话|信息隔离|叙事规则|文风|描写|判定|黑箱/i; const referenceWords=/档案|资料库|百科|名录|出现顺序|事件顺序|完整主线|事件主线|主线细化|既定历史主线|怪兽|超兽|异生兽|魔女(?:\\s*\\/|$)|使魔|敌人顺序|生物档案|形态与|形态力量|形态分类|来源分类/i; const worldWords=/世界观|世界线|时间线(?:设定)?|时空|闭环|时间锚点|时代背景|历史背景|地理|地点|城市|大学|校园|交友圈|宗门|门派|势力|社会|组织结构|力量体系|修行体系|魔法体系|能量守恒|灵根|境界|寿元|天道因果|多元宇宙|宇宙分区|光之国|见泷原|灵魂宝石|魔女结界|文明/i; const settingTitleWords=/的设定\\s*$/i; const characterSettingWords=/设定(?:[（(][^）)]*[）)])?\\s*$/i; const nonCharacterSettingWords=/世界观|世界线|时间线|时空|大学|校园|交友圈|组织|体系|规则|机制|样式|格式|分支|灾难|场景|地点|社会|背景|路线|事件|主线|结局|资料库|档案/i; const explicitCharacter=/^(?:角色|人物|NPC|情敌)[：:·\\s]+/i; const entityWords=/魔女|使魔|怪兽|超兽|异生兽|魔兽|人工生命|生物档案/i; const plotPrefixWords=/(?:^|[|_])(?:MAIN_SPLIT|MAIN_PLOT|PLOT|STORY_OUTLINE|STORYLINE|CHAPTER_FLOW|CAMPAIGN|QUESTLINE)(?:[|_]|$)/i; const plotTitleWords=/整体主线大纲|主线大纲|故事大纲|剧情大纲|剧情总纲|章节流程总览|章节运行|章节大纲|战役大纲|篇章大纲|主线阶段|主线推进表|剧情阶段表/i; const plotChapterWords=/(?:序章|终章|第[一二三四五六七八九十百零\\d]+章)[：:·\\s_-].*(?:章节运行|剧情|大纲|流程|阶段)/i; const plotTemplateWords=/模板|助手|生成器|写作指南|格式规范|输出规范|提示词|占位符|正则/i; const remoteWords=/远程版|远程加载|联网远程|在线加载|服务器读取|实时读取数据|空壳角色卡|强需求联机|云端世界书|remote\\s*(?:card|loader|manifest)/i; const structuredCharacterWords=/^(?:[A-Z0-9]+_)?(?:NPC|CHAR|CHARACTER|COMPANION)[|_]/i; const themeCategoryWords=/武侠|仙侠|玄幻|奇幻|科幻|末世|都市|校园|历史|古风|江湖|综武|同人|悬疑|推理|冒险|战争|群像|恋爱|纯爱|成人向|R18|跑团|DND|TRPG|角色扮演|互动小说|剧情向|开放世界|高自由度|多线剧情|多结局|克苏鲁|赛博朋克|西幻|东方幻想/i; const themeUtilityWords=/UI|界面|按钮|面板|变量|状态栏|档案页|排行榜|排行|地图|立绘|正则|regex|CSS|HTML|手机|电脑|背包栏|系统流|系统规则|武功系统|战斗系统|数值|模板|协议|提示词|世界书|字数|作者|制作|修复|BUG|版本|V\\d+(?:\\.\\d+)*|百人|千种|张立绘/i;\n${helperNames.map(extractFunction).join('\n')}\nreturn {${helperNames.join(',')}};`)();
+
+const openingHelpers = new Function(`const excludedLine=/^(?:←|返回|跳过|点击|开始阅读|继续|确认选择|选择你的|推荐行动|封面|状态栏|UI说明|复制身份档案|注入身份开始|第?\\s*\\d+\\s*项)\\s*.*$/i; const profileWords=/姓名|名字|身份|年龄|性别|种族|身高|体重|外貌|衣着|穿衣|性格|习惯|爱好|厌恶|背景|能力|战斗风格|人际关系|当前目标|时间线|降临坐标|身份来源|剧情记忆|灵魂宝石/i;\n${['safeText','normalizeLines','replaceUserPlaceholder','normalizeNarrative','looksLikeProfileText','stripOpeningUiMarkers','extractOpening'].map(extractFunction).join('\n')}\nreturn {stripOpeningUiMarkers,extractOpening};`)();
+
+const uiOnlyOpening = openingHelpers.extractOpening('[TS14_START_UI]');
+const mixedOpening = openingHelpers.extractOpening('[TS14_START_UI]\n你在山门外醒来。');
+const ordinaryBracketOpening = openingHelpers.extractOpening('[DND_5E]\n你推开酒馆木门。');
+assert(uiOnlyOpening.kind === 'ui-trigger' && uiOnlyOpening.text === '', '纯 UI 启动标记仍被识别为第一章');
+assert(mixedOpening.kind === 'narrative' && mixedOpening.text === '你在山门外醒来。', 'UI 标记后的真实叙事没有正确保留');
+assert(ordinaryBracketOpening.text.includes('[DND_5E]'), '普通非 UI 方括号标签被错误删除');
 
 const nested = { data: JSON.stringify({ data: { name: '字符串包装角色', initialMessage: '字符串包装开场' } }) };
 assert(helpers.cardLayers(nested).length === 3, '多层 data / JSON 字符串包装未展开');
@@ -199,6 +212,7 @@ if (fs.existsSync(actualFourteenJson)) {
   assert(actualCard.sourceEntryCount === 1506, '十四天书 JSON 的世界书条目数不正确');
   assert(['综武', '武侠', '古风', '江湖'].every(tag => actualThemes.selected.includes(tag)), '十四天书 JSON 没有恢复 RP-Hub 类型标签：'+actualThemes.selected.join('、'));
   assert(!actualThemes.selected.some(tag => /UI|手机|变量|档案页|排行榜|系统流/i.test(tag)), '十四天书 JSON 主题仍混入工具标签');
+  assert(openingHelpers.extractOpening(actualCard.firstMes).kind === 'ui-trigger', '十四天书 JSON 的 UI 开场没有被隔离');
 }
 if (fs.existsSync(actualFourteenPng)) {
   const parsed = await helpers.parsePng(new File([fs.readFileSync(actualFourteenPng)], '十四天书V0.9.png', { type: 'image/png' }));
@@ -206,6 +220,7 @@ if (fs.existsSync(actualFourteenPng)) {
   const actualThemes = helpers.analyzeCardThemes(actualCard);
   assert(actualCard.sourceEntryCount === 1506, '十四天书 PNG 内嵌世界书没有完整解析');
   assert(actualThemes.selected.includes('综武') && actualThemes.selected.includes('武侠'), '十四天书 PNG 没有恢复主题类别');
+  assert(openingHelpers.extractOpening(actualCard.firstMes).text === '', '十四天书 PNG 的 UI 开场仍会进入第一章');
 }
 
 const userPlaceholderCard = {
