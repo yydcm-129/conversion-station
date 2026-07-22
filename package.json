@@ -1,8 +1,8 @@
 {
   "name": "conversion-station",
-  "version": "0.0.7",
+  "version": "0.0.8",
   "private": true,
-  "description": "Tavern character card converter with story-outline extraction, remote-card detection and multi-format export",
+  "description": "Bidirectional converter for Moyun novel settings and RP-Hub or Tavern character cards",
   "scripts": {
     "test": "node tests/verify-output.mjs"
   }

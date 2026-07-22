@@ -6,7 +6,7 @@ import { fileURLToPath } from 'node:url';
 const here = path.dirname(fileURLToPath(import.meta.url));
 const root = path.resolve(here, '..');
 const htmlPath = path.join(root, '转换空间站.html');
-const defaultOutput = path.join(root, 'tests', 'fixtures', 'story-outline-output-v0.0.7.json');
+const defaultOutput = path.join(root, 'tests', 'fixtures', 'story-outline-output-v0.0.8.json');
 const outputPath = process.argv[2] ? path.resolve(process.argv[2]) : defaultOutput;
 
 const moyunImportSourcePath = 'F:/yydcm129/Moyun-main/Moyun-main/assets/js/moyun.js';
@@ -28,7 +28,13 @@ assert(scriptStart >= 0 && scriptEnd > scriptStart, 'HTML 中没有找到内联�
 const script = html.slice(scriptStart + '<script>'.length, scriptEnd);
 new Function(script);
 
-assert(html.includes("const VERSION='v0.0.7'"), 'HTML 版本号不是 v0.0.7');
+assert(html.includes("const VERSION='v0.0.8'"), 'HTML 版本号不是 v0.0.8');
+assert(html.includes('id="reverseModeBtn"') && html.includes('id="reverseWorkspace"'), '缺少小说设定反向转换模式');
+assert(html.includes('accept=".json,.txt,application/json,text/plain"'), '反向模式没有接受 Moyun JSON/TXT');
+assert(html.includes('id="reverseAuditEnabled"') && html.includes('不是唯一标准'), '过审助手式完善没有设计为可选条件');
+assert(html.includes('openUiCacheDb') && html.includes('conversion-station-ui-cache'), '缺少 IndexedDB UI 包缓存');
+assert(html.includes('id="reverseCover"') && html.includes('embedCharacterDataInPng'), '缺少图片上传或 PNG 角色卡封装');
+assert(['rp-hub','silly-v1','silly-v2','silly-v3','tavern-ai','risu-ai','agnai'].every(format => html.includes(`value="${format}"`)), '反向输出格式选项不完整');
 assert(html.includes('SillyTavern V1 / V2 / V3'), '界面没有声明主流酒馆卡兼容范围');
 assert(html.includes('TavernAI、RP-Hub、RisuAI、Agnai'), '界面没有声明平台兼容范围');
 assert(html.includes("payloadKey=chunks.ccv3?'ccv3':chunks.chara?'chara'"), 'PNG 没有优先识别 ccv3 / chara');
@@ -80,7 +86,7 @@ const savedApiSettings = html.match(/localStorage\.setItem\('conversionStationAp
 assert(savedApiSettings && !/apiKey|\bkey\b/.test(savedApiSettings), 'API Key 可能被写入 localStorage');
 assert(!/sk-[A-Za-z0-9_-]{12,}|ghp_[A-Za-z0-9]{20,}|github_pat_[A-Za-z0-9_]{20,}|AKIA[0-9A-Z]{16}|BEGIN (?:RSA |EC |OPENSSH )?PRIVATE KEY/.test(html), 'HTML 中发现疑似硬编码密钥');
 assert(!html.includes('不会修改文件、不执行正则'), '页面仍包含已要求删除的解释文字');
-assert(/<footer[^>]*>\s*<span[^>]*>v0\.0\.7<\/span>\s*·\s*制作者：yydcm129\s*<\/footer>/.test(html), '页脚内容不符合要求');
+assert(/<footer[^>]*>\s*<span[^>]*>v0\.0\.8<\/span>\s*·\s*制作者：yydcm129\s*<\/footer>/.test(html), '页脚内容不符合要求');
 
 function extractFunction(name) {
   const lines = script.split(/\r?\n/);
@@ -110,9 +116,15 @@ const helperNames = [
   'extractHashtags', 'themeTagScore', 'analyzeCardThemes', 'htmlDensity',
   'plainCharacterText', 'isCharacterContent', 'isCharacterSettingComment',
   'entrySignalScores', 'classifyEntry', 'structuralTokens', 'learnStructuralClassifications',
-  'modelSearchData', 'outlineRequestBody'
+  'modelSearchData', 'outlineRequestBody',
+  'stableHash', 'uiCacheRecord', 'unwrapMoyunBook', 'framedTextSection', 'parseMoyunTxt',
+  'normalizeMoyunSource', 'clipHeadTail', 'buildReverseMaterial', 'normalizeReverseWorldEntry',
+  'reverseRequestBody',
+  'normalizeReverseCard', 'selectedCachedUi', 'applyCachedUiPackages', 'toReverseWorldExport', 'reverseBaseData',
+  'buildReverseFormat', 'auditReverseCard', 'encodeBase64Utf8', 'reverseCrc32', 'asciiBytes',
+  'concatBytes', 'u32Bytes', 'makePngTextChunk', 'pngTextKeyword', 'embedCharacterDataInPng'
 ];
-const helpers = new Function(`const VERSION='v0.0.7'; const uiWords=/样式|UI|面板|输出(?:内容)?规范|格式规范|生图|绘图提示|状态锚点|状态栏|美化|正则|regex|HTML|CSS|脚本|模板|协议|容器/i; const mechanicWords=/数值|调度|结局|节点|事件库|触发|好感|共鸣|羁绊|心魔|执念|善恶|时钟|系统规则|机制|进度条|倒计时|状态协议|铁律|原则|防OOC|防抢话|信息隔离|叙事规则|文风|描写|判定|黑箱/i; const referenceWords=/档案|资料库|百科|名录|出现顺序|事件顺序|完整主线|事件主线|主线细化|既定历史主线|怪兽|超兽|异生兽|魔女(?:\\s*\\/|$)|使魔|敌人顺序|生物档案|形态与|形态力量|形态分类|来源分类/i; const worldWords=/世界观|世界线|时间线(?:设定)?|时空|闭环|时间锚点|时代背景|历史背景|地理|地点|城市|大学|校园|交友圈|宗门|门派|势力|社会|组织结构|力量体系|修行体系|魔法体系|能量守恒|灵根|境界|寿元|天道因果|多元宇宙|宇宙分区|光之国|见泷原|灵魂宝石|魔女结界|文明/i; const settingTitleWords=/的设定\\s*$/i; const characterSettingWords=/设定(?:[（(][^）)]*[）)])?\\s*$/i; const nonCharacterSettingWords=/世界观|世界线|时间线|时空|大学|校园|交友圈|组织|体系|规则|机制|样式|格式|分支|灾难|场景|地点|社会|背景|路线|事件|主线|结局|资料库|档案/i; const explicitCharacter=/^(?:角色|人物|NPC|情敌)[：:·\\s]+/i; const entityWords=/魔女|使魔|怪兽|超兽|异生兽|魔兽|人工生命|生物档案/i; const plotPrefixWords=/(?:^|[|_])(?:MAIN_SPLIT|MAIN_PLOT|PLOT|STORY_OUTLINE|STORYLINE|CHAPTER_FLOW|CAMPAIGN|QUESTLINE)(?:[|_]|$)/i; const plotTitleWords=/整体主线大纲|主线大纲|故事大纲|剧情大纲|剧情总纲|章节流程总览|章节运行|章节大纲|战役大纲|篇章大纲|主线阶段|主线推进表|剧情阶段表/i; const plotChapterWords=/(?:序章|终章|第[一二三四五六七八九十百零\\d]+章)[：:·\\s_-].*(?:章节运行|剧情|大纲|流程|阶段)/i; const plotTemplateWords=/模板|助手|生成器|写作指南|格式规范|输出规范|提示词|占位符|正则/i; const remoteWords=/远程版|远程加载|联网远程|在线加载|服务器读取|实时读取数据|空壳角色卡|强需求联机|云端世界书|remote\\s*(?:card|loader|manifest)/i; const structuredCharacterWords=/^(?:[A-Z0-9]+_)?(?:NPC|CHAR|CHARACTER|COMPANION)[|_]/i; const themeCategoryWords=/武侠|仙侠|玄幻|奇幻|科幻|末世|都市|校园|历史|古风|江湖|综武|同人|悬疑|推理|冒险|战争|群像|恋爱|纯爱|成人向|R18|跑团|DND|TRPG|角色扮演|互动小说|剧情向|开放世界|高自由度|多线剧情|多结局|克苏鲁|赛博朋克|西幻|东方幻想/i; const themeUtilityWords=/UI|界面|按钮|面板|变量|状态栏|档案页|排行榜|排行|地图|立绘|正则|regex|CSS|HTML|手机|电脑|背包栏|系统流|系统规则|武功系统|战斗系统|数值|模板|协议|提示词|世界书|字数|作者|制作|修复|BUG|版本|V\\d+(?:\\.\\d+)*|百人|千种|张立绘/i;\n${helperNames.map(extractFunction).join('\n')}\nreturn {${helperNames.join(',')}};`)();
+const helpers = new Function(`const VERSION='v0.0.8'; const uiWords=/样式|UI|面板|输出(?:内容)?规范|格式规范|生图|绘图提示|状态锚点|状态栏|美化|正则|regex|HTML|CSS|脚本|模板|协议|容器/i; const mechanicWords=/数值|调度|结局|节点|事件库|触发|好感|共鸣|羁绊|心魔|执念|善恶|时钟|系统规则|机制|进度条|倒计时|状态协议|铁律|原则|防OOC|防抢话|信息隔离|叙事规则|文风|描写|判定|黑箱/i; const referenceWords=/档案|资料库|百科|名录|出现顺序|事件顺序|完整主线|事件主线|主线细化|既定历史主线|怪兽|超兽|异生兽|魔女(?:\\s*\\/|$)|使魔|敌人顺序|生物档案|形态与|形态力量|形态分类|来源分类/i; const worldWords=/世界观|世界线|时间线(?:设定)?|时空|闭环|时间锚点|时代背景|历史背景|地理|地点|城市|大学|校园|交友圈|宗门|门派|势力|社会|组织结构|力量体系|修行体系|魔法体系|能量守恒|灵根|境界|寿元|天道因果|多元宇宙|宇宙分区|光之国|见泷原|灵魂宝石|魔女结界|文明/i; const settingTitleWords=/的设定\\s*$/i; const characterSettingWords=/设定(?:[（(][^）)]*[）)])?\\s*$/i; const nonCharacterSettingWords=/世界观|世界线|时间线|时空|大学|校园|交友圈|组织|体系|规则|机制|样式|格式|分支|灾难|场景|地点|社会|背景|路线|事件|主线|结局|资料库|档案/i; const explicitCharacter=/^(?:角色|人物|NPC|情敌)[：:·\\s]+/i; const entityWords=/魔女|使魔|怪兽|超兽|异生兽|魔兽|人工生命|生物档案/i; const plotPrefixWords=/(?:^|[|_])(?:MAIN_SPLIT|MAIN_PLOT|PLOT|STORY_OUTLINE|STORYLINE|CHAPTER_FLOW|CAMPAIGN|QUESTLINE)(?:[|_]|$)/i; const plotTitleWords=/整体主线大纲|主线大纲|故事大纲|剧情大纲|剧情总纲|章节流程总览|章节运行|章节大纲|战役大纲|篇章大纲|主线阶段|主线推进表|剧情阶段表/i; const plotChapterWords=/(?:序章|终章|第[一二三四五六七八九十百零\\d]+章)[：:·\\s_-].*(?:章节运行|剧情|大纲|流程|阶段)/i; const plotTemplateWords=/模板|助手|生成器|写作指南|格式规范|输出规范|提示词|占位符|正则/i; const remoteWords=/远程版|远程加载|联网远程|在线加载|服务器读取|实时读取数据|空壳角色卡|强需求联机|云端世界书|remote\\s*(?:card|loader|manifest)/i; const structuredCharacterWords=/^(?:[A-Z0-9]+_)?(?:NPC|CHAR|CHARACTER|COMPANION)[|_]/i; const themeCategoryWords=/武侠|仙侠|玄幻|奇幻|科幻|末世|都市|校园|历史|古风|江湖|综武|同人|悬疑|推理|冒险|战争|群像|恋爱|纯爱|成人向|R18|跑团|DND|TRPG|角色扮演|互动小说|剧情向|开放世界|高自由度|多线剧情|多结局|克苏鲁|赛博朋克|西幻|东方幻想/i; const themeUtilityWords=/UI|界面|按钮|面板|变量|状态栏|档案页|排行榜|排行|地图|立绘|正则|regex|CSS|HTML|手机|电脑|背包栏|系统流|系统规则|武功系统|战斗系统|数值|模板|协议|提示词|世界书|字数|作者|制作|修复|BUG|版本|V\\d+(?:\\.\\d+)*|百人|千种|张立绘/i; const state={reverse:{cachedUi:[]}}; const testElements={reverseAuditEnabled:{checked:false},reverseCharacterFocus:{value:''},reverseIncludeOutline:{checked:true}}; const $=id=>testElements[id]||({checked:false,value:''}); const reverseCrcTable=(()=>{const table=new Uint32Array(256);for(let index=0;index<256;index++){let value=index;for(let bit=0;bit<8;bit++)value=(value&1)?0xedb88320^(value>>>1):value>>>1;table[index]=value>>>0}return table})();\n${helperNames.map(extractFunction).join('\n')}\nreturn {${helperNames.join(',')},__state:state,__elements:testElements};`)();
 
 const openingHelpers = new Function(`const excludedLine=/^(?:←|返回|跳过|点击|开始阅读|继续|确认选择|选择你的|推荐行动|封面|状态栏|UI说明|复制身份档案|注入身份开始|第?\\s*\\d+\\s*项)\\s*.*$/i; const profileWords=/姓名|名字|身份|年龄|性别|种族|身高|体重|外貌|衣着|穿衣|性格|习惯|爱好|厌恶|背景|能力|战斗风格|人际关系|当前目标|时间线|降临坐标|身份来源|剧情记忆|灵魂宝石/i;\n${['safeText','normalizeLines','replaceUserPlaceholder','normalizeNarrative','looksLikeProfileText','stripOpeningUiMarkers','extractOpening'].map(extractFunction).join('\n')}\nreturn {stripOpeningUiMarkers,extractOpening};`)();
 
@@ -443,6 +455,110 @@ assert(parsedPlainItxt.payloadKey === 'metadata' && parsedPlainItxt.raw.name ===
 const base64Url = Buffer.from(JSON.stringify(agnai)).toString('base64url');
 assert(helpers.parseCardPayload(base64Url).name === 'Agnai角色', 'Base64URL 角色数据解析失败');
 
+const reverseMoyun = {
+  novel: { title: '雾港调查录', theme: '悬疑 奇幻', synopsis: '调查员林澈追查雾港失踪案。', worldView: '雾港每逢月蚀便与镜界重叠。', outline: '林澈在旧灯塔发现镜界入口。' },
+  chapters: [{ title: '灯塔来信', content: '林澈收到守塔人留下的求救信。' }],
+  characters: [{ name: '林澈', desc: '谨慎的调查员。', personalityTags: ['谨慎'], speakingStyle: '简洁' }],
+  chapterOutlines: [], chapterIndexDrafts: [], foreshadowMatrix: [], summaries: []
+};
+const normalizedReverseJson = helpers.normalizeMoyunSource(reverseMoyun, '雾港调查录.json');
+assert(normalizedReverseJson.novel.title === '雾港调查录' && normalizedReverseJson.characters[0].name === '林澈', 'Moyun 单书 JSON 反向解析失败');
+const wrappedLibrary = { currentBookId: 'book2', books: [{ id: 'book1', novel: { title: '旧书' } }, { id: 'book2', novel: reverseMoyun.novel, chapters: reverseMoyun.chapters, characters: reverseMoyun.characters }] };
+assert(helpers.normalizeMoyunSource({ data: JSON.stringify(wrappedLibrary) }, '书库.json').novel.title === '雾港调查录', 'data 包装书库 JSON 反向解析失败');
+
+const moyunTxt = `\uFEFF【书籍信息】
+书名：雾港调查录
+主题：悬疑 奇幻
+简介：调查员林澈追查雾港失踪案。
+世界观：雾港每逢月蚀便与镜界重叠。
+
+===========================
+故事大纲
+===========================
+
+林澈在旧灯塔发现镜界入口。
+
+===========================
+正文内容
+===========================
+
+第 1 章 灯塔来信
+
+林澈收到守塔人留下的求救信。
+
+---------------------------
+
+===========================
+角色卡汇总
+===========================
+
+姓名：林澈
+描述：谨慎的调查员。
+性格标签：谨慎、敏锐
+说话风格：简洁
+`;
+const normalizedReverseTxt = helpers.parseMoyunTxt(moyunTxt, '雾港调查录.txt');
+assert(normalizedReverseTxt.novel.title === '雾港调查录' && normalizedReverseTxt.chapters.length === 1, 'Moyun TXT 书籍或章节解析失败');
+assert(normalizedReverseTxt.characters[0].name === '林澈' && normalizedReverseTxt.characters[0].personalityTags.includes('敏锐'), 'Moyun TXT 角色汇总解析失败');
+const limitedMaterial = helpers.buildReverseMaterial({ ...normalizedReverseJson, chapters: Array.from({ length: 30 }, (_, index) => ({ title: `第${index + 1}章`, content: '章节正文'.repeat(3000) })) }, 12000);
+assert(JSON.stringify(limitedMaterial).length <= 13000 && limitedMaterial.omittedChapterChars > 0, '反向 AI 材料没有遵守发送上限');
+const reversePrompt = helpers.reverseRequestBody({ model: 'fixture-model', temperature: 0.9 }, limitedMaterial, { stream: false, jsonMode: true });
+assert(reversePrompt.temperature === 0.6 && reversePrompt.response_format?.type === 'json_object', '反向 AI 请求兼容参数不正确');
+assert(reversePrompt.messages[0].content.includes('不得续写小说正文') && reversePrompt.messages[1].content.includes('雾港调查录'), '反向 AI 请求没有包含边界或小说材料');
+helpers.__elements.reverseAuditEnabled.checked = true;
+helpers.__elements.reverseCharacterFocus.value = '{{user}}';
+const auditedPrompt = helpers.reverseRequestBody({ model: 'fixture-model', temperature: 0.2 }, limitedMaterial, { stream: true, jsonMode: false });
+assert(auditedPrompt.messages[0].content.includes('可选完善规则') && auditedPrompt.messages[1].content.startsWith('目标主角色：由你从材料中选择'), '可选完善或 user 占位符目标处理失败');
+helpers.__elements.reverseAuditEnabled.checked = false;
+helpers.__elements.reverseCharacterFocus.value = '';
+
+const realMoyunPath = 'F:/yydcm129/小说/《创世余烬》_含图片.json';
+if (fs.existsSync(realMoyunPath)) {
+  const realMoyun = helpers.normalizeMoyunSource(JSON.parse(fs.readFileSync(realMoyunPath, 'utf8')), path.basename(realMoyunPath));
+  const realMaterial = helpers.buildReverseMaterial(realMoyun, 60000);
+  assert(realMoyun.novel.title === '《创世余烬》' && realMoyun.chapters.length === 6 && realMoyun.characters.length === 1, '真实 Moyun 小说样例解析失败');
+  assert(JSON.stringify(realMaterial).length <= 61000 && !JSON.stringify(realMaterial).includes('_imageCache'), '真实 Moyun 小说 AI 材料超限或混入图片缓存');
+}
+
+const reverseCard = helpers.normalizeReverseCard({
+  name: '林澈', description: '谨慎的调查员。', personality: '敏锐，克制。', scenario: '雾港月蚀将至。', first_mes: '“你也收到那封信了吗？”林澈抬起油灯。',
+  tags: ['悬疑', '奇幻'], worldInfo: [
+    { comment: '雾港', content: '雾港在月蚀时与镜界重叠。', keys: ['雾港', '月蚀'], enabled: true, constant: false },
+    { comment: '调查规则', content: '线索必须经现场调查确认。', keys: [], enabled: true, constant: true }
+  ]
+});
+const formats = ['rp-hub','silly-v1','silly-v2','silly-v3','tavern-ai','risu-ai','agnai'];
+const reverseOutputs = Object.fromEntries(formats.map(format => [format, helpers.buildReverseFormat(reverseCard, format)]));
+assert(reverseOutputs['rp-hub'].data.extensions.rp_hub_watermark === 'rp-hub', 'RP-Hub 反向格式缺少水印');
+assert(reverseOutputs['silly-v2'].spec === 'chara_card_v2' && reverseOutputs['silly-v3'].spec === 'chara_card_v3', 'SillyTavern V2/V3 spec 不正确');
+assert(reverseOutputs['silly-v1'].name === '林澈' && reverseOutputs['tavern-ai'].first_mes.includes('油灯'), 'V1/TavernAI 输出字段不正确');
+assert(reverseOutputs['risu-ai'].source_format === 'RisuAI' && reverseOutputs['risu-ai'].globalLore[0].triggers.includes('雾港'), 'RisuAI 输出映射失败');
+assert(reverseOutputs.agnai.format === 'Agnai' && reverseOutputs.agnai.lorebook.entries.length === 2, 'Agnai 输出映射失败');
+for (const format of formats) {
+  const roundTrip = helpers.normalizeCard(reverseOutputs[format]);
+  assert(roundTrip.name === '林澈' && roundTrip.firstMes.includes('油灯') && roundTrip.entries.length === 2, `${format} 无法由正向解析器完整读回`);
+}
+const basicAudit = helpers.auditReverseCard(reverseCard, false);
+assert(basicAudit.some(item => item.title.includes('未启用发布审核完善')), '过审完善关闭时仍可能被强制套用');
+
+const cachePkg = helpers.makeUiPackage({ name: '缓存测试', uiTemplates: [{ name: '状态栏', htmlTemplate: '<div>状态</div>' }], regexes: [{ name: '界面包装', regex: '^([\\s\\S]+)$', replacement: '<main>$1</main>' }] }, [{ type: 'ui', _rawComment: '菜单', _rawContent: '<section>菜单</section>', _rawKeys: ['菜单'], enabled: true }], 'RP-Hub JSON', 'cache.json');
+helpers.uiCacheRecord(cachePkg);
+assert(cachePkg.summary.total === 3, 'UI 缓存测试包数量不正确');
+helpers.__state.reverse.cachedUi = [{ ...helpers.uiCacheRecord(cachePkg), selected: true, includeTemplates: true, includeEntries: true, includeRegex: true, placement: 'top' }];
+const uiMerged = helpers.buildReverseFormat(reverseCard, 'rp-hub').data;
+assert(uiMerged.extensions.rp_hub_ui_templates.length === 1 && uiMerged.extensions.regex_scripts.length === 1, '勾选的缓存 UI 模板或正则没有合并到角色卡');
+assert(uiMerged.character_book.entries.some(entry => entry.comment === '[UI] 菜单' && entry.position === 'before_char'), '勾选的缓存 UI 世界书或位置配置没有合并');
+helpers.__state.reverse.cachedUi = [];
+
+const tinyPng = Buffer.concat([Buffer.from([137,80,78,71,13,10,26,10]), pngChunk('IEND', Buffer.alloc(0))]);
+const embeddedV2 = helpers.embedCharacterDataInPng(tinyPng, reverseOutputs['silly-v2'], 'silly-v2');
+const parsedEmbeddedV2 = await helpers.parsePng(fileLike(Buffer.from(embeddedV2)));
+assert(parsedEmbeddedV2.payloadKey === 'chara' && parsedEmbeddedV2.raw.data.name === '林澈', '生成的 V2 PNG 无法由正向解析器读回');
+const embeddedV3 = helpers.embedCharacterDataInPng(tinyPng, reverseOutputs['silly-v3'], 'silly-v3');
+const embeddedChunksV3 = await helpers.readPngText(embeddedV3.buffer.slice(embeddedV3.byteOffset, embeddedV3.byteOffset + embeddedV3.byteLength));
+assert(embeddedChunksV3.chara && embeddedChunksV3.ccv3, 'V3 PNG 没有同时写入 chara/ccv3');
+assert(JSON.parse(Buffer.from(embeddedChunksV3.ccv3, 'base64').toString('utf8')).spec === 'chara_card_v3', 'V3 PNG ccv3 内容不正确');
+
 let plainPngError = '';
 try {
   await helpers.parsePng(fileLike(Buffer.concat([
@@ -455,6 +571,7 @@ try {
 assert(plainPngError.includes('可能是普通图片'), '普通 PNG 没有给出可理解的错误提示');
 
 console.log('PASS HTML 语法、主流 JSON 字段与 tEXt/zTXt/iTXt PNG 兼容矩阵');
+console.log('PASS Moyun JSON/TXT 反向解析、七种角色卡格式、UI 缓存与 PNG 回读矩阵');
 
 if (!fs.existsSync(outputPath)) {
   console.log(`SKIP 未找到本地测试输出：${outputPath}`);
@@ -472,7 +589,7 @@ const acceptedByMoyunResolver = !!(
 );
 
 assert(acceptedByMoyunResolver, '不满足 Moyun resolveImportedBookData 的接收条件');
-assert(output._conversionStationVersion === 'v0.0.7', '转换器版本字段不正确');
+assert(output._conversionStationVersion === 'v0.0.8', '转换器版本字段不正确');
 assert(output.novel && typeof output.novel === 'object', '缺少 novel');
 assert(typeof output.novel.outline === 'string' && output.novel.outline.includes('亡灵天灾'), '角色卡剧情大纲没有写入 novel.outline');
 assert(Array.isArray(output.chapterOutlines) && output.chapterOutlines.length === 0, 'chapterOutlines 必须为空');
