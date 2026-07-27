@@ -5,6 +5,7 @@ import { fileURLToPath } from 'node:url';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const port = Number(process.env.PORT || 8765);
+let requestCount = 0;
 const fixtureCard = {
   name: '林澈',
   description: '雾港调查员，负责追查月蚀期间的失踪事件。',
@@ -34,19 +35,27 @@ const server = http.createServer((request, response) => {
     send(response, 200, 'application/json; charset=utf-8', JSON.stringify({ data: [{ id: 'fixture-role-card-model' }, { id: 'fixture-backup-model' }] }));
     return;
   }
+  if (request.method === 'GET' && url.pathname === '/fixture-state') {
+    send(response, 200, 'application/json; charset=utf-8', JSON.stringify({ requestCount }));
+    return;
+  }
   if (request.method === 'POST' && url.pathname === '/v1/chat/completions') {
+    requestCount += 1;
     let body = '';
     request.setEncoding('utf8');
     request.on('data', chunk => { body += chunk; });
     request.on('end', () => {
-      let stream = false;
-      try { stream = JSON.parse(body).stream === true; } catch {}
+      let stream = false,model = '';
+      try { const parsed=JSON.parse(body);stream=parsed.stream===true;model=String(parsed.model||''); } catch {}
       const content = JSON.stringify(fixtureCard);
       if (!stream) {
         send(response, 200, 'application/json; charset=utf-8', JSON.stringify({ choices: [{ message: { content } }] }));
         return;
       }
       response.writeHead(200, { 'Content-Type': 'text/event-stream; charset=utf-8', 'Cache-Control': 'no-store' });
+      if (model === 'fixture-slow-model') {
+        let index=0;const timer=setInterval(()=>{if(index>=content.length){clearInterval(timer);response.end('data: [DONE]\n\n');return}response.write(`data: ${JSON.stringify({choices:[{delta:{content:content.slice(index,index+12)}}]})}\n\n`);index+=12},120);request.on('close',()=>clearInterval(timer));return;
+      }
       for (let index = 0; index < content.length; index += 120) {
         response.write(`data: ${JSON.stringify({ choices: [{ delta: { content: content.slice(index, index + 120) } }] })}\n\n`);
       }
