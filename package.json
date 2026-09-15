@@ -1,6 +1,6 @@
 {
   "name": "conversion-station",
-  "version": "0.0.9",
+  "version": "0.1.0",
   "private": true,
   "description": "Bidirectional converter for Moyun novel settings and RP-Hub or Tavern character cards",
   "scripts": {

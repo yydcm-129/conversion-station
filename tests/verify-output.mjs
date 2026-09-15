@@ -6,7 +6,7 @@ import { fileURLToPath } from 'node:url';
 const here = path.dirname(fileURLToPath(import.meta.url));
 const root = path.resolve(here, '..');
 const htmlPath = path.join(root, '转换空间站.html');
-const defaultOutput = path.join(root, 'tests', 'fixtures', 'story-outline-output-v0.0.9.json');
+const defaultOutput = path.join(root, 'tests', 'fixtures', 'story-outline-output-v0.1.0.json');
 const outputPath = process.argv[2] ? path.resolve(process.argv[2]) : defaultOutput;
 
 const moyunImportSourcePath = 'F:/yydcm129/Moyun-main/Moyun-main/assets/js/moyun.js';
@@ -28,7 +28,7 @@ assert(scriptStart >= 0 && scriptEnd > scriptStart, 'HTML 中没有找到内联�
 const script = html.slice(scriptStart + '<script>'.length, scriptEnd);
 new Function(script);
 
-assert(html.includes("const VERSION='v0.0.9'"), 'HTML 版本号不是 v0.0.9');
+assert(html.includes("const VERSION='v0.1.0'"), 'HTML 版本号不是 v0.1.0');
 assert(html.includes('id="outputTokenLimit"') && html.includes('max_tokens:config.outputTokens||8192'), '缺少可配置输出 token 上限或正向默认值');
 assert(html.includes('max_tokens:Math.min(config.outputTokens||8192,4096)'), '独立大纲没有限制为 4096 tokens');
 assert(html.includes('id="stopAi"') && html.includes('AbortController') && html.includes('stopAllAiTasks'), '缺少全局 AI 停止控制');
@@ -91,7 +91,7 @@ const savedApiSettings = html.match(/localStorage\.setItem\('conversionStationAp
 assert(savedApiSettings && !/apiKey|\bkey\b/.test(savedApiSettings), 'API Key 可能被写入 localStorage');
 assert(!/sk-[A-Za-z0-9_-]{12,}|ghp_[A-Za-z0-9]{20,}|github_pat_[A-Za-z0-9_]{20,}|AKIA[0-9A-Z]{16}|BEGIN (?:RSA |EC |OPENSSH )?PRIVATE KEY/.test(html), 'HTML 中发现疑似硬编码密钥');
 assert(!html.includes('不会修改文件、不执行正则'), '页面仍包含已要求删除的解释文字');
-assert(/<footer[^>]*>\s*<span[^>]*>v0\.0\.9<\/span>\s*·\s*制作者：yydcm129\s*<\/footer>/.test(html), '页脚内容不符合要求');
+assert(/<footer[^>]*>\s*<span[^>]*>v0\.1\.0<\/span>\s*·\s*制作者：yydcm129\s*<\/footer>/.test(html), '页脚内容不符合要求');
 
 function extractFunction(name) {
   const lines = script.split(/\r?\n/);
@@ -123,13 +123,14 @@ const helperNames = [
   'entrySignalScores', 'classifyEntry', 'structuralTokens', 'learnStructuralClassifications',
   'modelSearchData', 'stripFence', 'extractJson', 'outlineRequestBody',
   'stableHash', 'uiCacheRecord', 'unwrapMoyunBook', 'framedTextSection', 'parseMoyunTxt',
-  'normalizeMoyunSource', 'clipHeadTail', 'buildReverseEntries', 'buildReverseMaterial', 'normalizeReverseWorldEntry',
+  'normalizeMoyunSource', 'normalizeMoyunStoryTime', 'normalizeMoyunVolumes', 'normalizeMoyunDialogueList', 'normalizeMoyunRelationAttitude', 'normalizeMoyunRelationChangeReason',
+  'clipHeadTail', 'buildReverseEntries', 'buildReverseMaterial', 'normalizeReverseWorldEntry',
   'reverseRequestBody',
   'normalizeReverseCard', 'selectedCachedUi', 'applyCachedUiPackages', 'toReverseWorldExport', 'reverseBaseData',
   'buildReverseFormat', 'auditReverseCard', 'encodeBase64Utf8', 'reverseCrc32', 'asciiBytes',
   'concatBytes', 'u32Bytes', 'makePngTextChunk', 'pngTextKeyword', 'embedCharacterDataInPng'
 ];
-const helpers = new Function(`const VERSION='v0.0.9'; const uiWords=/样式|UI|面板|输出(?:内容)?规范|格式规范|生图|绘图提示|状态锚点|状态栏|美化|正则|regex|HTML|CSS|脚本|模板|协议|容器/i; const mechanicWords=/数值|调度|结局|节点|事件库|触发|好感|共鸣|羁绊|心魔|执念|善恶|时钟|系统规则|机制|进度条|倒计时|状态协议|铁律|原则|防OOC|防抢话|信息隔离|叙事规则|文风|描写|判定|黑箱/i; const referenceWords=/档案|资料库|百科|名录|出现顺序|事件顺序|完整主线|事件主线|主线细化|既定历史主线|怪兽|超兽|异生兽|魔女(?:\\s*\\/|$)|使魔|敌人顺序|生物档案|形态与|形态力量|形态分类|来源分类/i; const worldWords=/世界观|世界线|时间线(?:设定)?|时空|闭环|时间锚点|时代背景|历史背景|地理|地点|城市|大学|校园|交友圈|宗门|门派|势力|社会|组织结构|力量体系|修行体系|魔法体系|能量守恒|灵根|境界|寿元|天道因果|多元宇宙|宇宙分区|光之国|见泷原|灵魂宝石|魔女结界|文明/i; const settingTitleWords=/的设定\\s*$/i; const characterSettingWords=/设定(?:[（(][^）)]*[）)])?\\s*$/i; const nonCharacterSettingWords=/世界观|世界线|时间线|时空|大学|校园|交友圈|组织|体系|规则|机制|样式|格式|分支|灾难|场景|地点|社会|背景|路线|事件|主线|结局|资料库|档案/i; const explicitCharacter=/^(?:角色|人物|NPC|情敌)[：:·\\s]+/i; const entityWords=/魔女|使魔|怪兽|超兽|异生兽|魔兽|人工生命|生物档案/i; const plotPrefixWords=/(?:^|[|_])(?:MAIN_SPLIT|MAIN_PLOT|PLOT|STORY_OUTLINE|STORYLINE|CHAPTER_FLOW|CAMPAIGN|QUESTLINE)(?:[|_]|$)/i; const plotTitleWords=/整体主线大纲|主线大纲|故事大纲|剧情大纲|剧情总纲|章节流程总览|章节运行|章节大纲|战役大纲|篇章大纲|主线阶段|主线推进表|剧情阶段表/i; const plotChapterWords=/(?:序章|终章|第[一二三四五六七八九十百零\\d]+章)[：:·\\s_-].*(?:章节运行|剧情|大纲|流程|阶段)/i; const plotTemplateWords=/模板|助手|生成器|写作指南|格式规范|输出规范|提示词|占位符|正则/i; const remoteWords=/远程版|远程加载|联网远程|在线加载|服务器读取|实时读取数据|空壳角色卡|强需求联机|云端世界书|remote\\s*(?:card|loader|manifest)/i; const structuredCharacterWords=/^(?:[A-Z0-9]+_)?(?:NPC|CHAR|CHARACTER|COMPANION)[|_]/i; const themeCategoryWords=/武侠|仙侠|玄幻|奇幻|科幻|末世|都市|校园|历史|古风|江湖|综武|同人|悬疑|推理|冒险|战争|群像|恋爱|纯爱|成人向|R18|跑团|DND|TRPG|角色扮演|互动小说|剧情向|开放世界|高自由度|多线剧情|多结局|克苏鲁|赛博朋克|西幻|东方幻想/i; const themeUtilityWords=/UI|界面|按钮|面板|变量|状态栏|档案页|排行榜|排行|地图|立绘|正则|regex|CSS|HTML|手机|电脑|背包栏|系统流|系统规则|武功系统|战斗系统|数值|模板|协议|提示词|世界书|字数|作者|制作|修复|BUG|版本|V\\d+(?:\\.\\d+)*|百人|千种|张立绘/i; const state={reverse:{cachedUi:[]}}; const testElements={reverseAuditEnabled:{checked:false},reverseCharacterFocus:{value:''},reverseIncludeOutline:{checked:true}}; const $=id=>testElements[id]||({checked:false,value:''}); const reverseCrcTable=(()=>{const table=new Uint32Array(256);for(let index=0;index<256;index++){let value=index;for(let bit=0;bit<8;bit++)value=(value&1)?0xedb88320^(value>>>1):value>>>1;table[index]=value>>>0}return table})();\n${helperNames.map(extractFunction).join('\n')}\nreturn {${helperNames.join(',')},__state:state,__elements:testElements};`)();
+const helpers = new Function(`const VERSION='v0.1.0'; const uiWords=/样式|UI|面板|输出(?:内容)?规范|格式规范|生图|绘图提示|状态锚点|状态栏|美化|正则|regex|HTML|CSS|脚本|模板|协议|容器/i; const mechanicWords=/数值|调度|结局|节点|事件库|触发|好感|共鸣|羁绊|心魔|执念|善恶|时钟|系统规则|机制|进度条|倒计时|状态协议|铁律|原则|防OOC|防抢话|信息隔离|叙事规则|文风|描写|判定|黑箱/i; const referenceWords=/档案|资料库|百科|名录|出现顺序|事件顺序|完整主线|事件主线|主线细化|既定历史主线|怪兽|超兽|异生兽|魔女(?:\\s*\\/|$)|使魔|敌人顺序|生物档案|形态与|形态力量|形态分类|来源分类/i; const worldWords=/世界观|世界线|时间线(?:设定)?|时空|闭环|时间锚点|时代背景|历史背景|地理|地点|城市|大学|校园|交友圈|宗门|门派|势力|社会|组织结构|力量体系|修行体系|魔法体系|能量守恒|灵根|境界|寿元|天道因果|多元宇宙|宇宙分区|光之国|见泷原|灵魂宝石|魔女结界|文明/i; const settingTitleWords=/的设定\\s*$/i; const characterSettingWords=/设定(?:[（(][^）)]*[）)])?\\s*$/i; const nonCharacterSettingWords=/世界观|世界线|时间线|时空|大学|校园|交友圈|组织|体系|规则|机制|样式|格式|分支|灾难|场景|地点|社会|背景|路线|事件|主线|结局|资料库|档案/i; const explicitCharacter=/^(?:角色|人物|NPC|情敌)[：:·\\s]+/i; const entityWords=/魔女|使魔|怪兽|超兽|异生兽|魔兽|人工生命|生物档案/i; const plotPrefixWords=/(?:^|[|_])(?:MAIN_SPLIT|MAIN_PLOT|PLOT|STORY_OUTLINE|STORYLINE|CHAPTER_FLOW|CAMPAIGN|QUESTLINE)(?:[|_]|$)/i; const plotTitleWords=/整体主线大纲|主线大纲|故事大纲|剧情大纲|剧情总纲|章节流程总览|章节运行|章节大纲|战役大纲|篇章大纲|主线阶段|主线推进表|剧情阶段表/i; const plotChapterWords=/(?:序章|终章|第[一二三四五六七八九十百零\\d]+章)[：:·\\s_-].*(?:章节运行|剧情|大纲|流程|阶段)/i; const plotTemplateWords=/模板|助手|生成器|写作指南|格式规范|输出规范|提示词|占位符|正则/i; const remoteWords=/远程版|远程加载|联网远程|在线加载|服务器读取|实时读取数据|空壳角色卡|强需求联机|云端世界书|remote\\s*(?:card|loader|manifest)/i; const structuredCharacterWords=/^(?:[A-Z0-9]+_)?(?:NPC|CHAR|CHARACTER|COMPANION)[|_]/i; const themeCategoryWords=/武侠|仙侠|玄幻|奇幻|科幻|末世|都市|校园|历史|古风|江湖|综武|同人|悬疑|推理|冒险|战争|群像|恋爱|纯爱|成人向|R18|跑团|DND|TRPG|角色扮演|互动小说|剧情向|开放世界|高自由度|多线剧情|多结局|克苏鲁|赛博朋克|西幻|东方幻想/i; const themeUtilityWords=/UI|界面|按钮|面板|变量|状态栏|档案页|排行榜|排行|地图|立绘|正则|regex|CSS|HTML|手机|电脑|背包栏|系统流|系统规则|武功系统|战斗系统|数值|模板|协议|提示词|世界书|字数|作者|制作|修复|BUG|版本|V\\d+(?:\\.\\d+)*|百人|千种|张立绘/i; const state={reverse:{cachedUi:[]}}; const testElements={reverseAuditEnabled:{checked:false},reverseCharacterFocus:{value:''},reverseIncludeOutline:{checked:true}}; const $=id=>testElements[id]||({checked:false,value:''}); const reverseCrcTable=(()=>{const table=new Uint32Array(256);for(let index=0;index<256;index++){let value=index;for(let bit=0;bit<8;bit++)value=(value&1)?0xedb88320^(value>>>1):value>>>1;table[index]=value>>>0}return table})();\n${helperNames.map(extractFunction).join('\n')}\nreturn {${helperNames.join(',')},__state:state,__elements:testElements};`)();
 
 const openingHelpers = new Function(`const excludedLine=/^(?:←|返回|跳过|点击|开始阅读|继续|确认选择|选择你的|推荐行动|封面|状态栏|UI说明|复制身份档案|注入身份开始|第?\\s*\\d+\\s*项)\\s*.*$/i; const profileWords=/姓名|名字|身份|年龄|性别|种族|身高|体重|外貌|衣着|穿衣|性格|习惯|爱好|厌恶|背景|能力|战斗风格|人际关系|当前目标|时间线|降临坐标|身份来源|剧情记忆|灵魂宝石/i;\n${['safeText','normalizeLines','replaceUserPlaceholder','normalizeNarrative','looksLikeProfileText','stripOpeningUiMarkers','extractOpening'].map(extractFunction).join('\n')}\nreturn {stripOpeningUiMarkers,extractOpening};`)();
 
@@ -482,9 +483,38 @@ const reverseEntries = helpers.buildReverseEntries(normalizedReverseJson);
 assert(['basic','world','character','outline','chapter'].every(type => reverseEntries.some(entry => entry.type === type)), '反向材料多层分类不完整');
 assert(reverseEntries.find(entry => entry.type === 'chapter').selected === false && reverseEntries.find(entry => entry.type === 'outline').selected === true, '反向推荐选择没有默认排除正文或保留大纲');
 const selectedReverseMaterial = helpers.buildReverseMaterial(normalizedReverseJson, 60000, reverseEntries);
-assert(selectedReverseMaterial.chapters.length === 0 && selectedReverseMaterial.novel.outline.includes('旧灯塔'), '反向材料没有只读取已勾选分类');
+assert(!(Array.isArray(selectedReverseMaterial.chapters) && selectedReverseMaterial.chapters.length) && selectedReverseMaterial.novel.outline.includes('旧灯塔'), '反向材料没有只读取已勾选分类');
 const wrappedLibrary = { currentBookId: 'book2', books: [{ id: 'book1', novel: { title: '旧书' } }, { id: 'book2', novel: reverseMoyun.novel, chapters: reverseMoyun.chapters, characters: reverseMoyun.characters }] };
 assert(helpers.normalizeMoyunSource({ data: JSON.stringify(wrappedLibrary) }, '书库.json').novel.title === '雾港调查录', 'data 包装书库 JSON 反向解析失败');
+
+// v0.1.0：墨韵 v0.0.10-v0.0.13 数据结构兼容
+assert(helpers.normalizeMoyunStoryTime('【永历三年·冬】') === '【永历三年·冬】' && helpers.normalizeMoyunStoryTime('【翌日清晨】') === '【翌日清晨】', '合法剧情时间被误拒');
+assert(helpers.normalizeMoyunStoryTime('【月夜】') === '' && helpers.normalizeMoyunStoryTime('普通文字') === '', '非法剧情时间被误收');
+assert(helpers.normalizeMoyunVolumes([{ title: '起卷', startChapter: 1, endChapter: 3, summary: '开端' }])[0].title === '起卷', '卷纲对象解析失败');
+assert(helpers.normalizeMoyunVolumes(['起卷'])[0].title === '起卷' && helpers.normalizeMoyunVolumes(null).length === 0, '卷纲字符串或空值解析失败');
+const wholeSentenceDialogues = helpers.normalizeMoyunDialogueList('你以为，你真的逃得掉吗？住手！\n别怕。我来帮你包扎。');
+assert(wholeSentenceDialogues.length === 4 && wholeSentenceDialogues[0] === '你以为，你真的逃得掉吗？' && wholeSentenceDialogues[1] === '住手！', '台词整句没有按句末标点拆分或把逗号当成了分句点');
+const clampedRelation = helpers.normalizeMoyunRelationAttitude('x'.repeat(50));
+assert(clampedRelation.length === 30 && helpers.normalizeMoyunRelationChangeReason('y'.repeat(200)).length === 120, '关系态度或变化原因没有按墨韵字数上限截断');
+const moyunWithVolumes = {
+  novel: { title: '雾港调查录', outline: '总纲', volumes: [{ id: 'vol1', title: '起卷', startChapter: 1, endChapter: 3, summary: '雾港之谜的开端。' }] },
+  chapters: [{ title: '灯塔来信', content: '林澈收到守塔人留下的求救信。', storyTime: '【永历三年·冬】' }],
+  characters: [{ name: '林澈', desc: '谨慎的调查员。', relationships: [{ targetName: '阿婉', type: '同伴', attitude: '信任但有所隐瞒，未完全说破', changeReason: '因为守塔人事件而开始怀疑灯塔的真相，态度有所动摇'.repeat(10) }], exampleDialogues: '别怕。我来帮你包扎，忍一忍就好。' }],
+  chapterOutlines: [], chapterIndexDrafts: [], foreshadowMatrix: [], summaries: []
+};
+const normalizedV13 = helpers.normalizeMoyunSource(moyunWithVolumes, '雾港调查录v13.json');
+assert(normalizedV13.volumes.length === 1 && normalizedV13.volumes[0].title === '起卷' && normalizedV13.volumes[0].startChapter === 1, 'Moyun v0.0.13 卷纲解析失败');
+assert(normalizedV13.chapters[0].storyTime === '【永历三年·冬】', '章节剧情时间元数据解析失败');
+assert(normalizedV13.characters[0].exampleDialogues.length === 2 && normalizedV13.characters[0].exampleDialogues[0] === '别怕。', '台词整句解析失败');
+assert(normalizedV13.characters[0].relationships[0].attitude === '信任但有所隐瞒，未完全说破' && helpers.normalizeMoyunRelationAttitude('x'.repeat(50)).length === 30, '关系态度没有按 30 字上限截断');
+assert(normalizedV13.characters[0].relationships[0].changeReason.length === 120, '关系变化原因没有按 120 字上限截断');
+const volumeEntries = helpers.buildReverseEntries(normalizedV13);
+const volumeOutlineEntry = volumeEntries.find(entry => entry.type === 'outline' && String(entry.title).includes('卷纲'));
+assert(volumeOutlineEntry && volumeOutlineEntry.selected === true, '卷纲没有作为大纲材料进入反向分类');
+const volumeMaterial = helpers.buildReverseMaterial(normalizedV13, 60000, volumeEntries);
+assert(Array.isArray(volumeMaterial.volumes) && volumeMaterial.volumes[0].title === '起卷' && volumeMaterial.volumes[0].summary === '雾港之谜的开端。', '卷纲没有进入反向 AI 材料');
+const volumePrompt = helpers.reverseRequestBody({ model: 'm', temperature: 0.6 }, volumeMaterial, { stream: false, jsonMode: true });
+assert(volumePrompt.messages[0].content.includes('卷纲'), '反向 AI 提示词没有说明卷纲只作背景');
 
 const moyunTxt = `\uFEFF【书籍信息】
 书名：雾港调查录
@@ -516,10 +546,12 @@ const moyunTxt = `\uFEFF【书籍信息】
 描述：谨慎的调查员。
 性格标签：谨慎、敏锐
 说话风格：简洁
+台词示例：你以为，你真的逃得掉吗？住手！
 `;
 const normalizedReverseTxt = helpers.parseMoyunTxt(moyunTxt, '雾港调查录.txt');
 assert(normalizedReverseTxt.novel.title === '雾港调查录' && normalizedReverseTxt.chapters.length === 1, 'Moyun TXT 书籍或章节解析失败');
 assert(normalizedReverseTxt.characters[0].name === '林澈' && normalizedReverseTxt.characters[0].personalityTags.includes('敏锐'), 'Moyun TXT 角色汇总解析失败');
+assert(normalizedReverseTxt.characters[0].exampleDialogues.length === 2 && normalizedReverseTxt.characters[0].exampleDialogues[1] === '住手！', 'Moyun TXT 台词示例整句解析失败');
 const limitedMaterial = helpers.buildReverseMaterial({ ...normalizedReverseJson, chapters: Array.from({ length: 30 }, (_, index) => ({ title: `第${index + 1}章`, content: '章节正文'.repeat(3000) })) }, 12000);
 assert(JSON.stringify(limitedMaterial).length <= 13000 && limitedMaterial.omittedChapterChars > 0, '反向 AI 材料没有遵守发送上限');
 const reversePrompt = helpers.reverseRequestBody({ model: 'fixture-model', temperature: 0.9 }, limitedMaterial, { stream: false, jsonMode: true });
@@ -541,6 +573,7 @@ if (fs.existsSync(realMoyunPath)) {
   const realMaterial = helpers.buildReverseMaterial(realMoyun, 60000);
   assert(realMoyun.novel.title === '《创世余烬》' && realMoyun.chapters.length === 6 && realMoyun.characters.length === 1, '真实 Moyun 小说样例解析失败');
   assert(JSON.stringify(realMaterial).length <= 61000 && !JSON.stringify(realMaterial).includes('_imageCache'), '真实 Moyun 小说 AI 材料超限或混入图片缓存');
+  assert(Array.isArray(realMoyun.volumes), '真实 Moyun 小说卷纲字段缺失（应为空数组）');
 }
 
 const reverseCard = helpers.normalizeReverseCard({
@@ -612,7 +645,7 @@ const acceptedByMoyunResolver = !!(
 );
 
 assert(acceptedByMoyunResolver, '不满足 Moyun resolveImportedBookData 的接收条件');
-assert(output._conversionStationVersion === 'v0.0.9', '转换器版本字段不正确');
+assert(output._conversionStationVersion === 'v0.1.0', '转换器版本字段不正确');
 assert(output.novel && typeof output.novel === 'object', '缺少 novel');
 assert(typeof output.novel.outline === 'string' && output.novel.outline.includes('亡灵天灾'), '角色卡剧情大纲没有写入 novel.outline');
 assert(Array.isArray(output.chapterOutlines) && output.chapterOutlines.length === 0, 'chapterOutlines 必须为空');
