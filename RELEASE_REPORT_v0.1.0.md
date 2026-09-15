@@ -29,6 +29,14 @@
 
 正式版使用独立提交、`v0.1.0` 标签和 `git-backups/转换空间站-v0.1.0.bundle` 保存完整 Git 历史。旧 `v0.0.9` 目录只在封版后移入 `git-backups/project-snapshots`，不会删除。
 
+## 封版记录（含手机端适配追加）
+
+- 墨韵兼容提交：`f27070e`（首次 v0.1.0 标签指向该提交）。
+- 手机端适配追加提交：`6389935`。
+- `v0.1.0` 标签已重新指向 `6389935`（含墨韵兼容 + 手机端适配）。
+- 发布 Bundle：`git-backups/转换空间站-v0.1.0.bundle`（已重建并通过 `git bundle verify`）。
+- 发布 Bundle SHA-256：`DDB08B9862B677AE5E995BEFCE155BD2DA9A6C99E4A59E78E0AFA5AFDC3E4ED1`。
+
 ## 验证结论
 
 - `npm.cmd test` 通过（含 v0.1.0 新增卷纲/剧情时间/台词/关系断言、手机端适配静态断言与 v0.0.9 全部回归）。
