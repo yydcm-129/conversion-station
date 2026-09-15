@@ -35,7 +35,7 @@
 - 手机端适配追加提交：`6389935`。
 - `v0.1.0` 标签已重新指向 `6389935`（含墨韵兼容 + 手机端适配）。
 - 发布 Bundle：`git-backups/转换空间站-v0.1.0.bundle`（已重建并通过 `git bundle verify`）。
-- 发布 Bundle SHA-256：`DDB08B9862B677AE5E995BEFCE155BD2DA9A6C99E4A59E78E0AFA5AFDC3E4ED1`。
+- 发布 Bundle SHA-256：`2661F2BDBEAB304D116BD88ECADCAFB0E56BF9FAC9CDCC6D6627CCA31D2B1EA0`（最终封版：含封版记录提交 `3ae6ca3`）。
 
 ## 验证结论
 
