@@ -33,9 +33,9 @@
 
 - 墨韵兼容提交：`f27070e`（首次 v0.1.0 标签指向该提交）。
 - 手机端适配追加提交：`6389935`。
-- `v0.1.0` 标签已重新指向 `6389935`（含墨韵兼容 + 手机端适配）。
+- `v0.1.0` 标签最终指向 `6b7db26`（含墨韵兼容、手机端适配与封版记录）。
 - 发布 Bundle：`git-backups/转换空间站-v0.1.0.bundle`（已重建并通过 `git bundle verify`）。
-- 发布 Bundle SHA-256：`2661F2BDBEAB304D116BD88ECADCAFB0E56BF9FAC9CDCC6D6627CCA31D2B1EA0`（最终封版：含封版记录提交 `3ae6ca3`）。
+- 发布 Bundle SHA-256：`AC15F728DE98A76169C798450CC4CBF710E34CA3FB50878A8D2DB195B7E11B5A`。
 
 ## 验证结论
 
