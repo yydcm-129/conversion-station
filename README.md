@@ -2,7 +2,7 @@
 
 当前版本：`v0.1.0`
 
-`转换空间站.html` 是一个自包含、无需安装依赖的双向浏览器工具。它既能把 SillyTavern V1/V2/V3、TavernAI、RP-Hub、RisuAI、Agnai 等主流酒馆角色卡整理为 Moyun 小说设定，也能让用户自己的 AI 把 Moyun JSON/TXT 小说资料转换成可编辑、可导出的角色卡。本版本对齐墨韵 v0.0.10–v0.0.13 的卷纲、剧情时间、台词整句与关系字段规范。
+`转换空间站.html` 是一个自包含、无需安装依赖的双向浏览器工具。它既能把 SillyTavern V1/V2/V3、TavernAI、RP-Hub、RisuAI、Agnai 等主流酒馆角色卡整理为 Moyun 小说设定，也能让用户自己的 AI 把 Moyun JSON/TXT 小说资料转换成可编辑、可导出的角色卡。本版本对齐墨韵 v0.0.10–v0.0.13 的卷纲、剧情时间、台词整句与关系字段规范，并以手机窗口尺寸（320×568 至 844×390）完成触控与布局适配实测。
 
 ## 主要能力
 
@@ -45,7 +45,7 @@
 - 导出 JSON 携带 `novel.volumes`（墨韵 v0.0.10+ 卷纲结构：卷名、章节范围、框架摘要）。
 - 支持 Moyun JSON、通用设定 JSON、TXT、Markdown 和自定义文本扩展名导出。
 - 只把原角色卡开场白放入第一章，不生成后续正文、细纲或额外章节。
-- 响应式界面，支持桌面与移动端。
+- 响应式界面，支持桌面与移动端；条目勾选框等触控目标已按手机尺寸放大（26px，≤520px 视口 28px）。
 
 ### 小说设定转角色卡
 
@@ -151,11 +151,12 @@ https://cdn.sta1n.cn/v1
 - `SECURITY_AUDIT_v0.0.9.md`：API、停止控制、JSON 修复边界、材料最小化和示例只读审计。
 - `RELEASE_REPORT_v0.0.9.md`：本版范围、回滚点、只读参考和封版结论。
 - `MOYUN_V13_COMPAT_GUIDE_v0.1.0.md`：墨韵 v0.0.10–v0.0.13 卷纲、剧情时间、台词整句与关系字段的兼容说明。
-- `TEST_REPORT_v0.1.0.md`：卷纲、剧情时间、台词整句、关系字数与真实样例回归报告。
+- `TEST_REPORT_v0.1.0.md`：卷纲、剧情时间、台词整句、关系字数、真实样例回归与手机窗口尺寸适配报告。
 - `SECURITY_AUDIT_v0.1.0.md`：本版输入解析、AI 材料与导出边界审计。
 - `RELEASE_REPORT_v0.1.0.md`：本版范围、回滚点、只读参考和封版结论。
 - `tests/verify-output.mjs`：HTML 与生成 JSON 的结构检查脚本。
 - `tests/browser-fixture-server.mjs`：本地静态页面与模拟 Chat Completions 测试服务，不含真实密钥。
+- `tests/mobile-ui-probe.mjs` / `tests/mobile-reverse-probe.mjs`：手机窗口尺寸浏览器探针（正向弹窗、触控、布局溢出与反向分类流程），需本地夹具服务。
 - `test-output/`：本地测试产物目录，其中 JSON 默认不加入 Git。
 
 ## 本地验证

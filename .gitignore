@@ -7,3 +7,7 @@ Thumbs.db
 .idea/
 .vscode/
 
+
+# 本地临时依赖（playwright-core 探针用）
+node_modules/
+package-lock.json

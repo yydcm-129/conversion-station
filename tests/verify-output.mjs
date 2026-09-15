@@ -83,6 +83,10 @@ assert(html.includes('min-height:42px') && html.includes('gap:8px;max-height:300
 assert(!html.includes("if(!$('apiModel').value&&ids[0])$('apiModel').value=ids[0]"), '获取模型仍会自动选择第一项');
 assert(html.includes('stripOpeningUiMarkers') && html.includes("kind:'ui-trigger'"), '缺少 UI 启动开场识别');
 assert(html.includes('@media(max-width:520px)') && html.includes('.model-results'), '移动端断点没有覆盖新增模型结果区');
+assert(html.includes("$('previewUiPackage').onclick=()=>openUiPreview();"), 'UI 包预览按钮仍把点击事件对象当作包参数传入');
+assert(html.includes('.entry input{margin-top:5px;accent-color:#43cbed;cursor:pointer;width:26px;height:26px;padding:0}'), '条目勾选框缺少手机端触控尺寸');
+assert((html.match(/width:28px;height:28px/g) || []).length >= 1 && html.includes('.check input{margin-top:4px;accent-color:#43cbed;width:26px;height:26px;padding:0'), '手机端勾选框触控目标未放大到 26-28px');
+assert(html.includes('@media(max-width:700px){.ui-preview-grid{grid-template-columns:1fr}'), 'UI 预览弹窗缺少窄屏单列断点');
 assert(html.includes('id="remoteNotice"') && html.includes('detectRemoteInfo'), '缺少远程依赖角色卡提示');
 assert(html.includes('无法转换：该卡依赖远程服务器') && html.includes('state.remoteInfo.dependent'), '远程依赖卡没有阻止转换');
 assert(html.includes('id="exportFormat"') && html.includes('settings-json') && html.includes('custom-text'), '缺少多格式或自定义文本导出');
