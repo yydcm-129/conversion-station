@@ -64,7 +64,25 @@ const server = http.createServer((request, response) => {
       try { const parsed=JSON.parse(body);stream=parsed.stream===true;model=String(parsed.model||''); } catch {}
       const sys = (() => { try { return String((JSON.parse(body).messages||[]).find(m=>m.role==='system')?.content||''); } catch { return ''; } })();
       const isChatNovel = sys.includes('聊天记录转小说');
-      const content = isChatNovel ? JSON.stringify(fixtureChatNovel) : JSON.stringify(fixtureCard);
+      const isPlanStep = isChatNovel && sys.includes('第 1 步：规划');
+      const isChapterStep = isChatNovel && sys.includes('第 2 步：写正文');
+      const isCharactersStep = isChatNovel && sys.includes('第 3 步：整合角色');
+      let content;
+      if (isPlanStep) {
+        content = JSON.stringify({
+          novel: fixtureChatNovel.novel || { title: fixtureChatNovel.title, theme: fixtureChatNovel.theme, synopsis: fixtureChatNovel.synopsis, worldView: fixtureChatNovel.worldView, outline: fixtureChatNovel.outline, volumes: fixtureChatNovel.volumes },
+          chapterPlans: fixtureChatNovel.chapters.map((chapter, index) => ({ title: chapter.title, turnFloors: [index], note: '第' + (index + 1) + '章' }))
+        });
+      } else if (isChapterStep) {
+        const chapter = fixtureChatNovel.chapters[0];
+        content = JSON.stringify({ title: chapter.title, content: chapter.content });
+      } else if (isCharactersStep) {
+        content = JSON.stringify({ characters: fixtureChatNovel.characters });
+      } else if (isChatNovel) {
+        content = JSON.stringify(fixtureChatNovel);
+      } else {
+        content = JSON.stringify(fixtureCard);
+      }
       if (!stream) {
         send(response, 200, 'application/json; charset=utf-8', JSON.stringify({ choices: [{ message: { content } }] }));
         return;

@@ -29,12 +29,14 @@ function extractFunction(name) {
   throw new Error(`函数 ${name} 没有闭合`);
 }
 
-const helperNames = ['safeText','normalizeNarrative','normalizeEntityText','normalizeMoyunVolumes','normalizeAiCharacter','arrayValues'];
-const chatNames = ['stripChatNoise','extractChatStatusBlocks','statusValueSummary','summarizeStatusBlock','parseChatDocument','normalizeChatFloor','buildChatTurns'];
+const helperNames = ['safeText','normalizeNarrative','normalizeEntityText','normalizeMoyunVolumes','normalizeAiCharacter','arrayValues','compactContent','stripCodeFence','uiTemplateValues','regexScriptValues'];
+const chatNames = ['stripChatNoise','extractChatStatusBlocks','statusValueSummary','summarizeStatusBlock','parseChatDocument','normalizeChatFloor','buildChatTurns','discoverChatUiPatterns'];
 const noiseLine = script.split(/\r?\n/).find(line => line.includes('const chatNoiseBlocks'));
 assert(noiseLine, '没有找到 chatNoiseBlocks 定义');
+const chatStateStub = 'const state={chat:{uiPatterns:[]}};';
 
 const sandbox = new Function(`
+${chatStateStub}
 ${noiseLine}
 ${helperNames.map(extractFunction).join('\n')}
 ${chatNames.map(extractFunction).join('\n')}
@@ -154,3 +156,43 @@ catch (e) { assert(e.message.includes('为空'), '空文件错误提示不对');
 console.log('PASS 非法输入拒绝');
 
 console.log('── v0.1.1 全部聊天解析测试通过 ──');
+
+// 10. 系统楼层识别（酒馆式分类）
+const sysMsgs = [
+  { role: 'system', name: 'worldbook', content: '【世界书触发】雾港在月蚀期间与镜界重叠。' },
+  { role: 'assistant', name: '角色', content: '正常叙事楼层内容。' },
+  { role: 'user', name: '玩家', content: '我行动。' }
+];
+const sysFloors = sysMsgs.map((m, i) => sandbox.normalizeChatFloor(m, i));
+assert(sysFloors[0].role === 'system', 'role=system 楼层未识别为 system：' + sysFloors[0].role);
+assert(sysFloors[1].role === 'assistant' && sysFloors[2].role === 'user', '正常楼层角色识别错误');
+const sysFloor2 = sandbox.normalizeChatFloor({ role: 'system', name: '系统提示', content: '世界书注入的背景内容。' }, 3);
+assert(sysFloor2.role === 'system', 'role=system 且名字含“系统提示”的楼层未识别为 system：' + sysFloor2.role);
+const normalFloor = sandbox.normalizeChatFloor({ role: 'assistant', name: '系统提示', content: 'AI 叙事内容不应该误判。' }, 4);
+assert(normalFloor.role === 'assistant', 'role=assistant 的正常 AI 楼层被名字误判为 system');
+console.log('PASS 系统楼层识别（role=system + 名字启发式）');
+
+// 11. 通用 UI 发现引擎：用真实角色卡世界书风格构造未知标签模式
+const fakeCard = {
+  name: 'UI发现测试卡',
+  uiTemplates: [],
+  regexes: [],
+  entries: [
+    { comment: '状态面板规范', content: '<my_custom_panel>{"hp":100}</my_custom_panel> 每次回复末尾用 <my_custom_panel> 标签输出数值。' },
+    { comment: '设定', content: '普通世界书内容，无 UI。' }
+  ]
+};
+const patterns = sandbox.discoverChatUiPatterns(fakeCard);
+assert(patterns.length >= 1, 'UI 发现引擎没有找到任何模式');
+assert(patterns.some(pt => pt.type === 'entry-tag' && pt.label.includes('my_custom_panel')), '自定义标签 <my_custom_panel> 未被发现：' + JSON.stringify(patterns.map(p => p.label)));
+const rawWithUnknownTag = '正文叙事内容。\n<my_custom_panel>{"hp":88,"mp":30}</my_custom_panel>';
+const blocksWithPattern = sandbox.extractChatStatusBlocks(rawWithUnknownTag, patterns);
+assert(blocksWithPattern.some(b => b.kind === 'ui-pattern' && b.label === '<my_custom_panel>' && b.data.hp === 88), '未知标签数值块未按角色卡模式提取：' + JSON.stringify(blocksWithPattern));
+console.log('PASS 通用 UI 发现引擎：自定义标签 <my_custom_panel> 自动匹配提取 hp=88');
+
+// 12. 无模式时 state.chat.uiPatterns 兑底也为空数组（不拖崩既有样本）
+const blocksNoPattern = sandbox.extractChatStatusBlocks('普通正文，无数值块。');
+assert(blocksNoPattern.length === 0, '无模式时误提取');
+console.log('PASS 无模式兑底安全');
+
+console.log('── v0.1.1 增强：通用 UI 发现 + 系统楼层测试通过 ──');

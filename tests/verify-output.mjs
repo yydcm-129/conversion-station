@@ -102,6 +102,17 @@ assert(html.includes('parseChatDocument') && html.includes('rp-hub-branch-chat')
 assert(html.includes('stripChatNoise') && html.includes('<ui_template_updates>') && html.includes('<template_state') && html.includes('【状态栏】'), '聊天噪音清理未覆盖全部 UI 数值块');
 assert(html.includes('extractChatStatusBlocks') && html.includes('status-json') && html.includes('ui-template-updates') && html.includes('text-panel') && html.includes('status-bar'), '五种 UI 数值块提取不完整');
 assert(html.includes('buildChatTimeline') && html.includes('numericTimeline'), '缺少 UI 数值时间线聚合');
+assert(html.includes('discoverChatUiPatterns') && html.includes('applyChatUiPatterns') && html.includes('uiPatterns'), '缺少角色卡 UI 模式自动发现引擎');
+assert(html.includes('importUserPersona') && html.includes('userPersona') && html.includes('personaPolicy'), '缺少 user 个人设定导入与人称自适应');
+assert(html.includes('chatBatchMode') && html.includes('runChatGenerateBatched') && html.includes('chapterPlans'), '缺少长文本分批多轮生成');
+assert(html.includes('persona.active') && html.includes('严禁改写为第二人称') && html.includes('不得使用第二人称'), '提供了 user 设定时未禁用第二人称');
+assert(html.includes('id="userPersonaFile"') && html.includes('id="chatPersonaText"'), '缺少 user 设定文件导入或粘贴输入框');
+assert(html.includes('请先导入角色卡原卡'), '角色卡未设为聊天记录导入前置必选');
+assert(html.includes('AI 依赖提醒'), '缺少 AI 依赖提醒文案');
+assert(html.includes('chatRoleLabel') && html.includes("'system'"), '缺少系统楼层分类支持');
+assert(html.includes('chatFloorAddSys') && html.includes('overviewAddSys'), '缺少新建系统楼层按钮');
+assert(html.includes('previousSummaries') && html.includes('previousSummary'), '分批生成缺少章节间衔接摘要');
+assert(html.includes('renderChatBatchPlan'), '缺少分批计划进度渲染');
 assert(html.includes('buildChatTurns') && html.includes('chatTurnSize'), '缺少楼层回合合并');
 assert(html.includes('openFloorEdit') && html.includes('floorEditSave') && html.includes('addChatFloor'), '缺少楼层编辑或新建空白楼层');
 assert(html.includes('chatOverviewModal') && html.includes('chatOverviewList'), '缺少对话总览弹窗');
