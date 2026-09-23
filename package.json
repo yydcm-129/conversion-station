@@ -1,9 +1,9 @@
 {
   "name": "conversion-station",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "private": true,
-  "description": "Bidirectional converter for Moyun novel settings and RP-Hub or Tavern character cards",
+  "description": "Bidirectional converter for Moyun novel settings and RP-Hub or Tavern character cards, with chat log to novel conversion",
   "scripts": {
-    "test": "node tests/verify-output.mjs"
+    "test": "node tests/verify-output.mjs && node tests/chat-parsing-test.mjs"
   }
 }

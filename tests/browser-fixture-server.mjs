@@ -24,6 +24,21 @@ const fixtureCard = {
   ]
 };
 
+const fixtureChatNovel = {
+  title: '灯塔下的失踪者',
+  theme: '悬疑 探索',
+  synopsis: '夜色下的雾港码头，连续失踪案的背后藏着不为人知的秘密。',
+  worldView: '雾港是一座常年被海雾笼罩的小城，月蚀期间现实与镜界重叒。',
+  outline: '主角在码头与守塔人相遇，得知失踪案，展开调查。',
+  volumes: [{ title: '第一卷 码头夜雾', outline: '失踪案浮出水面。' }],
+  chapters: [
+    { title: '灯塔夜话', content: '夜色降临，灯塔的光扫过海面。你走上码头，她站在边缘等你。她回过头，眼中闪过一丝惊讶：「你来了。」你问她最近有什么异常，她压低声音：「码头上周失踪了三个人。」你决定跟她去看看。' }
+  ],
+  characters: [
+    { name: '守塔人', desc: '沉默真言，常年守着雾港灯塔。', personalityTags: ['沉默', '敏锐'], speakingStyle: '低声，简短。', exampleDialogues: ['你来了。'], dialogueType: '', relationships: [{ targetName: '主角', type: '同伴', attitude: '信任但保持警惕' }], characterPrompt: '' }
+  ]
+};
+
 function send(response, status, type, body) {
   response.writeHead(status, { 'Content-Type': type, 'Cache-Control': 'no-store' });
   response.end(body);
@@ -47,7 +62,9 @@ const server = http.createServer((request, response) => {
     request.on('end', () => {
       let stream = false,model = '';
       try { const parsed=JSON.parse(body);stream=parsed.stream===true;model=String(parsed.model||''); } catch {}
-      const content = JSON.stringify(fixtureCard);
+      const sys = (() => { try { return String((JSON.parse(body).messages||[]).find(m=>m.role==='system')?.content||''); } catch { return ''; } })();
+      const isChatNovel = sys.includes('聊天记录转小说');
+      const content = isChatNovel ? JSON.stringify(fixtureChatNovel) : JSON.stringify(fixtureCard);
       if (!stream) {
         send(response, 200, 'application/json; charset=utf-8', JSON.stringify({ choices: [{ message: { content } }] }));
         return;
