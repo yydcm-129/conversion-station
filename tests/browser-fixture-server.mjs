@@ -63,12 +63,31 @@ const server = http.createServer((request, response) => {
       let stream = false,model = '';
       try { const parsed=JSON.parse(body);stream=parsed.stream===true;model=String(parsed.model||''); } catch {}
       const sys = (() => { try { return String((JSON.parse(body).messages||[]).find(m=>m.role==='system')?.content||''); } catch { return ''; } })();
+
+      const isForwardPlan = sys.includes('角色卡转小说设定的规划器');
+      const isForwardGroup = sys.includes('角色卡转小说设定的结构化整理器');
+      const isReversePlan = sys.includes('小说资料转酒馆角色卡的规划器');
+      const isReverseGroup = sys.includes('小说设定转酒馆角色卡的结构化整理器');
       const isChatNovel = sys.includes('聊天记录转小说');
       const isPlanStep = isChatNovel && sys.includes('第 1 步：规划');
       const isChapterStep = isChatNovel && sys.includes('第 2 步：写正文');
       const isCharactersStep = isChatNovel && sys.includes('第 3 步：整合角色');
       let content;
-      if (isPlanStep) {
+      if (isForwardPlan) {
+        content = JSON.stringify({ title: '灯塔夜话', theme: '守望与羁绊', synopsis: '守塔人与侦探的故事。', characterGroups: [
+          { name: '守塔人组', entries: ['雾港设定', '灯塔设定'], note: '主角人物' },
+          { name: '世界组', entries: ['月蚀规则'], note: '世界观' }
+        ] });
+      } else if (isForwardGroup) {
+        content = JSON.stringify({ characters: [{ name: '守塔人', desc: '常年守着雾港灯塔的人。', personalityTags: ['沉默'], speakingStyle: '简短', exampleDialogues: ['「你来了。」'], dialogueType: '', relationships: [{ targetName: '主角', attitude: '信任', changeReason: '多次并肩' }], characterPrompt: '' }], worldView: '雾港在月蚀期间与镜界重叠。' });
+      } else if (isReversePlan) {
+        content = JSON.stringify({ name: '守塔人', characterGroups: [
+          { name: '开端组', chapters: ['第一章', '第二章'], note: '开场与相遇' },
+          { name: '发展组', chapters: ['第三章'], note: '冲突升级' }
+        ] });
+      } else if (isReverseGroup) {
+        content = JSON.stringify({ description: '守塔人，常年守着雾港灯塔。', personality: '沉默、敏锐。', scenario: '雾港码头。', first_mes: '码头的雾淹没了路灯。', mes_example: '{{char}}：「你来了。」', creator_notes: '', system_prompt: '', post_history_instructions: '', alternate_greetings: ['雨夜的灯塔。'], worldInfo: [{ comment: '雾港', content: '雾港在月蚀期间与镜界重叠。', keys: ['雾港'], enabled: true, constant: false, position: 'before_char', order: 100, depth: 4, probability: 100 }] });
+      } else if (isPlanStep) {
         content = JSON.stringify({
           novel: fixtureChatNovel.novel || { title: fixtureChatNovel.title, theme: fixtureChatNovel.theme, synopsis: fixtureChatNovel.synopsis, worldView: fixtureChatNovel.worldView, outline: fixtureChatNovel.outline, volumes: fixtureChatNovel.volumes },
           chapterPlans: fixtureChatNovel.chapters.map((chapter, index) => ({ title: chapter.title, turnFloors: [index], note: '第' + (index + 1) + '章' }))

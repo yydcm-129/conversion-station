@@ -84,8 +84,8 @@ assert(!html.includes("if(!$('apiModel').value&&ids[0])$('apiModel').value=ids[0
 assert(html.includes('stripOpeningUiMarkers') && html.includes("kind:'ui-trigger'"), '缺少 UI 启动开场识别');
 assert(html.includes('@media(max-width:520px)') && html.includes('.model-results'), '移动端断点没有覆盖新增模型结果区');
 assert(html.includes("$('previewUiPackage').onclick=()=>openUiPreview();"), 'UI 包预览按钮仍把点击事件对象当作包参数传入');
-assert(html.includes('.entry input{margin-top:5px;accent-color:#43cbed;cursor:pointer;width:26px;height:26px;padding:0}'), '条目勾选框缺少手机端触控尺寸');
-assert((html.match(/width:28px;height:28px/g) || []).length >= 1 && html.includes('.check input{margin-top:4px;accent-color:#43cbed;width:26px;height:26px;padding:0'), '手机端勾选框触控目标未放大到 26-28px');
+assert(html.includes('.entry input{margin-top:5px;accent-color:var(--accentCheck);cursor:pointer;width:26px;height:26px;padding:0}'), '条目勾选框缺少手机端触控尺寸');
+assert((html.match(/width:28px;height:28px/g) || []).length >= 1 && html.includes('.check input{margin-top:4px;accent-color:var(--accentCheck);width:26px;height:26px;padding:0'), '手机端勾选框触控目标未放大到 26-28px');
 assert(html.includes('@media(max-width:700px){.ui-preview-grid{grid-template-columns:1fr}'), 'UI 预览弹窗缺少窄屏单列断点');
 assert(html.includes('id="remoteNotice"') && html.includes('detectRemoteInfo'), '缺少远程依赖角色卡提示');
 assert(html.includes('无法转换：该卡依赖远程服务器') && html.includes('state.remoteInfo.dependent'), '远程依赖卡没有阻止转换');
@@ -102,6 +102,13 @@ assert(html.includes('parseChatDocument') && html.includes('rp-hub-branch-chat')
 assert(html.includes('stripChatNoise') && html.includes('<ui_template_updates>') && html.includes('<template_state') && html.includes('【状态栏】'), '聊天噪音清理未覆盖全部 UI 数值块');
 assert(html.includes('extractChatStatusBlocks') && html.includes('status-json') && html.includes('ui-template-updates') && html.includes('text-panel') && html.includes('status-bar'), '五种 UI 数值块提取不完整');
 assert(html.includes('buildChatTimeline') && html.includes('numericTimeline'), '缺少 UI 数值时间线聚合');
+assert(html.includes('data-theme="light"') && html.includes('applyTheme') && html.includes('themeBtn'), '缺少白天/黑夜双主题切换');
+assert(html.includes('conversionStationTheme'), '主题选择未持久化');
+assert(html.includes('insertChatPresetFloors') && html.includes('开场白 first_mes') && html.includes('loadChatBranch'), '缺少开场预设楼层展示');
+assert(html.includes('runAiBatched') && html.includes('characterGroups'), '正向生成缺少分批流水线');
+assert(html.includes('runReverseBatched'), '反向生成缺少分批流水线');
+assert(html.includes('forwardBatchMode') && html.includes('reverseBatchMode'), '缺少正向/反向分批模式选择器');
+assert(html.includes('角色卡转小说设定的规划器') && html.includes('小说资料转酒馆角色卡的规划器'), '分批规划轮提示词缺失');
 assert(html.includes('discoverChatUiPatterns') && html.includes('applyChatUiPatterns') && html.includes('uiPatterns'), '缺少角色卡 UI 模式自动发现引擎');
 assert(html.includes('importUserPersona') && html.includes('userPersona') && html.includes('personaPolicy'), '缺少 user 个人设定导入与人称自适应');
 assert(html.includes('chatBatchMode') && html.includes('runChatGenerateBatched') && html.includes('chapterPlans'), '缺少长文本分批多轮生成');

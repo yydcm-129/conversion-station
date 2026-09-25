@@ -17,6 +17,7 @@ const CARD = {
     description: '守塔人，常年守着雾港灯塔。',
     personality: '沉默、敏锐。',
     first_mes: '码头的雾淹没了路灯。',
+    alternate_greetings: ['雨夜，灯塔在暴风中明灭。', '清晨，海鸥掠过塔顶。'],
     character_book: {
       entries: [
         { comment: '状态面板规范', content: '每次回复末尾用 <my_panel>{"hp":100}</my_panel> 标签输出数值。', keys: ['面板'], enabled: true },
@@ -85,6 +86,28 @@ async function run() {
     // 4. system 楼层应显示“系统”标签
     const pills = await page.evaluate(() => [...document.querySelectorAll('#chatFloorList .floor-pill')].map(p => p.textContent));
     if (!pills.includes('系统')) { console.log(`${w}x${h} system floor pill missing: ${pills.join(',')}`); ok = false; }
+
+    // 4.5 开场预设楼层：first_mes/alternate_greetings 应作预设楼层展示
+    const presetInfo = await page.evaluate(() => {
+      const rows = [...document.querySelectorAll('#chatFloorList .floor')];
+      const presetRows = rows.filter(r => r.className.includes('preset'));
+      return { presetCount: presetRows.length, firstTitle: presetRows[0]?.querySelector('.floor-title')?.textContent || '' };
+    });
+    if (presetInfo.presetCount < 2) { console.log(`${w}x${h} preset floors missing: ${JSON.stringify(presetInfo)}`); ok = false; }
+    if (!presetInfo.firstTitle.includes('开场白')) { console.log(`${w}x${h} preset label missing: ${presetInfo.firstTitle}`); ok = false; }
+
+    // 4.6 主题切换：切亮再切回暗，验证持久化
+    await page.evaluate(() => document.querySelector('#themeBtn').click());
+    await page.waitForTimeout(150);
+    const themeLight = await page.evaluate(() => document.documentElement.dataset.theme);
+    if (themeLight !== 'light') { console.log(`${w}x${h} theme light FAIL: ${themeLight}`); ok = false; }
+    const lightText = await page.evaluate(() => getComputedStyle(document.querySelector('.brand h1')).color);
+    await page.evaluate(() => document.querySelector('#themeBtn').click());
+    await page.waitForTimeout(150);
+    const themeBack = await page.evaluate(() => document.documentElement.dataset.theme || 'dark');
+    if (themeBack === 'light') { console.log(`${w}x${h} theme back-to-dark FAIL`); ok = false; }
+    const persisted = await page.evaluate(() => localStorage.getItem('conversionStationTheme'));
+    if (persisted !== 'dark') { console.log(`${w}x${h} theme not persisted: ${persisted}`); ok = false; }
 
     // 5. UI 发现引擎：<my_panel> 自定义标签应提取为数值块（查所有楼层 meta）
     const allMeta = await page.evaluate(() => [...document.querySelectorAll('#chatFloorList .floor-meta')].map(m => m.textContent).join(' | '));
