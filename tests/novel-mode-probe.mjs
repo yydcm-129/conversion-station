@@ -72,6 +72,73 @@ try {
   check('TXT 导入后章节渲染', chapterCount >= 3, `行数=${chapterCount}`);
   const bookTitle = await page.evaluate(() => document.querySelector('#novelBookTitle')?.value || '');
   check('书名自动识别', bookTitle.includes('测试书'), `书名=${bookTitle}`);
+  // v0.1.3：作者输入框存在且导入时自动填充（示例 TXT 无作者行，应保持空并可手填）
+  const authorInputExists = await page.evaluate(() => !!document.querySelector('#novelBookAuthor'));
+  check('作者输入框存在', authorInputExists);
+  if (authorInputExists) {
+    await page.fill('#novelBookAuthor', '测试作者');
+    const authorKept = await page.evaluate(() => document.querySelector('#novelBookAuthor').value);
+    check('作者输入可编辑', authorKept === '测试作者', `作者=${authorKept}`);
+  }
+
+  // ── 2b. v0.1.3 下载站头部清理提示（带广告行的 TXT 导入状态文本）──
+  const zxcsTxt = [
+    '《下载站样本》作者：咸鱼飞行家',
+    '【本书由知轩藏书(Www.Zxcs.Info)收集整理,版权归原作者所有,更多精彩小说请访问www.zxcs.info!】',
+    '＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊',
+    '楔子 开端',
+    '楔子正文一句话。',
+    '第一章 起点',
+    '第一章正文一。',
+    '尾声',
+    '全书完。',
+  ].join('\n');
+  await fileInput.setInputFiles({
+    name: '下载站样本.txt',
+    mimeType: 'text/plain',
+    buffer: Buffer.from(zxcsTxt, 'utf8')
+  });
+  await page.waitForTimeout(600);
+  const importStatus = await page.evaluate(() => document.querySelector('#novelImportStatus')?.textContent || '');
+  check('下载站 TXT 清理提示', importStatus.includes('已清理 2 行下载站声明/广告行'), `状态=${importStatus.slice(0, 60)}`);
+  check('下载站 TXT 作者识别提示', importStatus.includes('作者：咸鱼飞行家'), `状态=${importStatus.slice(0, 60)}`);
+  const authorValue = await page.evaluate(() => document.querySelector('#novelBookAuthor')?.value || '');
+  check('作者自动填入输入框', authorValue === '咸鱼飞行家', `作者=${authorValue}`);
+
+  // ── 2c. v0.1.3 错放文件识别：聊天记录 TXT 放入小说区 → 弹窗询问跳转 ──
+  const chatTxt = [
+    '【玩家】我今天去哪里冒险？',
+    '【AI】你推开酒馆的门，风雪扑面而来。',
+    '【系统】你获得了一把生锈的铁剑。',
+    '【旁白】夜色渐深。',
+  ].join('\n');
+  await fileInput.setInputFiles({
+    name: '聊天记录.txt',
+    mimeType: 'text/plain',
+    buffer: Buffer.from(chatTxt, 'utf8')
+  });
+  await page.waitForTimeout(600);
+  const redirectOpen = await page.evaluate(() => document.querySelector('#fileKindConfirmModal')?.classList.contains('open'));
+  check('错放聊天 TXT 触发跳转弹窗', redirectOpen === true);
+  if (redirectOpen) {
+    const zoneHint = await page.evaluate(() => document.querySelector('#fileKindZoneHint')?.textContent || '');
+    const targetLabel = await page.evaluate(() => document.querySelector('#fileKindTargetLabel')?.textContent || '');
+    check('弹窗说明文件是聊天记录', zoneHint.includes('聊天记录'), `提示=${zoneHint.slice(0, 50)}`);
+    check('弹窗目标指向聊天模式', targetLabel.includes('聊天记录 → 小说'), `目标=${targetLabel.slice(0, 50)}`);
+    // 点击“跳转并导入”：应切换到聊天模式并尝试导入同一文件
+    await page.click('#fileKindConfirm');
+    await page.waitForTimeout(500);
+    check('确认后弹窗关闭', await page.evaluate(() => !document.querySelector('#fileKindConfirmModal').classList.contains('open')));
+    check('确认后切换到聊天模式', await page.evaluate(() => !document.querySelector('#chatWorkspace').classList.contains('hidden') && document.querySelector('#novelWorkspace').classList.contains('hidden')));
+    const chatStatus = await page.evaluate(() => document.querySelector('#chatImportStatus')?.textContent || '');
+    console.log('INFO 跳转后聊天导入状态:', JSON.stringify(chatStatus.slice(0, 80)));
+    check('跳转后聊天模式尝试导入', chatStatus.length > 0, `状态=${chatStatus.slice(0, 60)}`);
+    // 切回小说模式继续后续用例
+    await page.click('#novelModeBtn');
+    await page.waitForTimeout(300);
+  } else {
+    console.log('SKIP 错放弹窗未触发（检测评分未达阈值）');
+  }
 
   // ── 3. 阶段导航（第 2 阶段显示章节）──
   const stage2Visible = await page.evaluate(() => {
