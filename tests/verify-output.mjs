@@ -6,7 +6,7 @@ import { fileURLToPath } from 'node:url';
 const here = path.dirname(fileURLToPath(import.meta.url));
 const root = path.resolve(here, '..');
 const htmlPath = path.join(root, '转换空间站.html');
-const defaultOutput = path.join(root, 'tests', 'fixtures', 'story-outline-output-v0.1.1.json');
+const defaultOutput = path.join(root, 'tests', 'fixtures', 'story-outline-output-v0.1.2.json');
 const outputPath = process.argv[2] ? path.resolve(process.argv[2]) : defaultOutput;
 
 const moyunImportSourcePath = 'F:/yydcm129/Moyun-main/Moyun-main/assets/js/moyun.js';
@@ -28,7 +28,7 @@ assert(scriptStart >= 0 && scriptEnd > scriptStart, 'HTML 中没有找到内联�
 const script = html.slice(scriptStart + '<script>'.length, scriptEnd);
 new Function(script);
 
-assert(html.includes("const VERSION='v0.1.1'"), 'HTML 版本号不是 v0.1.1');
+assert(html.includes("const VERSION='v0.1.2'"), 'HTML 版本号不是 v0.1.2');
 assert(html.includes('id="outputTokenLimit"') && html.includes('max_tokens:config.outputTokens||8192'), '缺少可配置输出 token 上限或正向默认值');
 assert(html.includes('max_tokens:Math.min(config.outputTokens||8192,4096)'), '独立大纲没有限制为 4096 tokens');
 assert(html.includes('id="stopAi"') && html.includes('AbortController') && html.includes('stopAllAiTasks'), '缺少全局 AI 停止控制');
@@ -91,11 +91,30 @@ assert(html.includes('id="remoteNotice"') && html.includes('detectRemoteInfo'), 
 assert(html.includes('无法转换：该卡依赖远程服务器') && html.includes('state.remoteInfo.dependent'), '远程依赖卡没有阻止转换');
 assert(html.includes('id="exportFormat"') && html.includes('settings-json') && html.includes('custom-text'), '缺少多格式或自定义文本导出');
 assert(html.includes('matches.slice(0,500)'), '超大型世界书没有限制一次渲染数量');
+assert(html.includes('id="novelModeBtn"') && html.includes('id="novelWorkspace"'), '缺少成品小说导入模式');
+assert((html.match(/data-novel-step="[1-4]"/g) || []).length === 4, '成品小说四阶段导航不完整');
+assert(html.includes('.txt,.epub,.json') && html.includes('decodeFileBytes'), '成品小说导入没有接受 TXT/EPUB/JSON 或缺少编码解码');
+assert(html.includes("new TextDecoder('gbk')"), 'TXT 导入缺少 GBK 编码回退');
+assert(html.includes('zipStoreEntry') && html.includes('buildZipBytes') && html.includes('buildEpubBytes'), '缺少零依赖 ZIP/EPUB 生成');
+assert(html.includes('unzipEntries') && html.includes("DecompressionStream('deflate-raw')"), '缺少 ZIP 解包或 Deflate 解压');
+assert(html.includes('xmlEscape') && html.includes('mimetype'), 'EPUB 生成缺少转义或 mimetype 条目');
+assert(html.includes('novelChapterHeadingPattern') && html.includes('isNovelHeadingLine'), '缺少章节标题识别');
+assert(html.includes('splitNovelText') && html.includes('splitNovelByLength'), '缺少章节切分与按长度重切');
+assert(html.includes('runNovelAiExtract') && html.includes('novelRequestBody') && html.includes('novelBatchChapters'), '缺少 AI 精读三步流水线');
+assert(html.includes('严禁虚构新人物、新设定、新剧情或结局'), 'AI 精读提示词缺少禁止虚构约束');
+assert(html.includes('只提取正文中已经出现的角色'), 'AI 精读提示词缺少只提取既有事实约束');
+assert(html.includes('buildNovelMoyunOutput'), '缺少成品小说 Moyun 导出');
+assert(html.includes('id="novelExportFormat"') && html.includes('value="epub"'), '成品小说导出没有 EPUB 选项');
+assert(html.includes('novelChapterModal') && html.includes('openNovelChapterEdit') && html.includes('deleteNovelChapter'), '缺少章节编辑弹窗或删除');
+assert(html.includes('novelSynopsis') && html.includes('novelWorldView') && html.includes('novelCharactersJson'), '缺少识别结果字段');
+assert(html.includes('renderNovelBatchPlan'), '缺少 AI 精读批次进度渲染');
+assert(html.includes('--glowA') && html.includes('--panelGlass') && html.includes('--modalBackdrop'), '缺少双主题语义变量');
+assert(/[data-theme="light"]/.test(html), '白天主题变量块缺失');
 const savedApiSettings = html.match(/localStorage\.setItem\('conversionStationApi',JSON\.stringify\((\{[^)]*\})\)\)/)?.[1] || '';
 assert(savedApiSettings && !/apiKey|\bkey\b/.test(savedApiSettings), 'API Key 可能被写入 localStorage');
 assert(!/sk-[A-Za-z0-9_-]{12,}|ghp_[A-Za-z0-9]{20,}|github_pat_[A-Za-z0-9_]{20,}|AKIA[0-9A-Z]{16}|BEGIN (?:RSA |EC |OPENSSH )?PRIVATE KEY/.test(html), 'HTML 中发现疑似硬编码密钥');
 assert(!html.includes('不会修改文件、不执行正则'), '页面仍包含已要求删除的解释文字');
-assert(/<footer[^>]*>\s*<span[^>]*>v0\.1\.1<\/span>\s*·\s*制作者：yydcm129\s*<\/footer>/.test(html), '页脚内容不符合要求');
+assert(/<footer[^>]*>\s*<span[^>]*>v0\.1\.2<\/span>\s*·\s*制作者：yydcm129\s*<\/footer>/.test(html), '页脚内容不符合要求');
 assert(html.includes('id="chatModeBtn"') && html.includes('id="chatWorkspace"'), '缺少聊天记录转小说模式');
 assert(html.includes('id="versionBadge"') && html.includes('version-badge-btn') && html.includes('openChatOverview'), '版本号徽章不可点击或未接入对话总览');
 assert(html.includes('parseChatDocument') && html.includes('rp-hub-branch-chat'), '缺少 RP-Hub 分支聊天 JSONL 解析');
@@ -166,7 +185,7 @@ const helperNames = [
   'buildReverseFormat', 'auditReverseCard', 'encodeBase64Utf8', 'reverseCrc32', 'asciiBytes',
   'concatBytes', 'u32Bytes', 'makePngTextChunk', 'pngTextKeyword', 'embedCharacterDataInPng'
 ];
-const helpers = new Function(`const VERSION='v0.1.1'; const uiWords=/样式|UI|面板|输出(?:内容)?规范|格式规范|生图|绘图提示|状态锚点|状态栏|美化|正则|regex|HTML|CSS|脚本|模板|协议|容器/i; const mechanicWords=/数值|调度|结局|节点|事件库|触发|好感|共鸣|羁绊|心魔|执念|善恶|时钟|系统规则|机制|进度条|倒计时|状态协议|铁律|原则|防OOC|防抢话|信息隔离|叙事规则|文风|描写|判定|黑箱/i; const referenceWords=/档案|资料库|百科|名录|出现顺序|事件顺序|完整主线|事件主线|主线细化|既定历史主线|怪兽|超兽|异生兽|魔女(?:\\s*\\/|$)|使魔|敌人顺序|生物档案|形态与|形态力量|形态分类|来源分类/i; const worldWords=/世界观|世界线|时间线(?:设定)?|时空|闭环|时间锚点|时代背景|历史背景|地理|地点|城市|大学|校园|交友圈|宗门|门派|势力|社会|组织结构|力量体系|修行体系|魔法体系|能量守恒|灵根|境界|寿元|天道因果|多元宇宙|宇宙分区|光之国|见泷原|灵魂宝石|魔女结界|文明/i; const settingTitleWords=/的设定\\s*$/i; const characterSettingWords=/设定(?:[（(][^）)]*[）)])?\\s*$/i; const nonCharacterSettingWords=/世界观|世界线|时间线|时空|大学|校园|交友圈|组织|体系|规则|机制|样式|格式|分支|灾难|场景|地点|社会|背景|路线|事件|主线|结局|资料库|档案/i; const explicitCharacter=/^(?:角色|人物|NPC|情敌)[：:·\\s]+/i; const entityWords=/魔女|使魔|怪兽|超兽|异生兽|魔兽|人工生命|生物档案/i; const plotPrefixWords=/(?:^|[|_])(?:MAIN_SPLIT|MAIN_PLOT|PLOT|STORY_OUTLINE|STORYLINE|CHAPTER_FLOW|CAMPAIGN|QUESTLINE)(?:[|_]|$)/i; const plotTitleWords=/整体主线大纲|主线大纲|故事大纲|剧情大纲|剧情总纲|章节流程总览|章节运行|章节大纲|战役大纲|篇章大纲|主线阶段|主线推进表|剧情阶段表/i; const plotChapterWords=/(?:序章|终章|第[一二三四五六七八九十百零\\d]+章)[：:·\\s_-].*(?:章节运行|剧情|大纲|流程|阶段)/i; const plotTemplateWords=/模板|助手|生成器|写作指南|格式规范|输出规范|提示词|占位符|正则/i; const remoteWords=/远程版|远程加载|联网远程|在线加载|服务器读取|实时读取数据|空壳角色卡|强需求联机|云端世界书|remote\\s*(?:card|loader|manifest)/i; const structuredCharacterWords=/^(?:[A-Z0-9]+_)?(?:NPC|CHAR|CHARACTER|COMPANION)[|_]/i; const themeCategoryWords=/武侠|仙侠|玄幻|奇幻|科幻|末世|都市|校园|历史|古风|江湖|综武|同人|悬疑|推理|冒险|战争|群像|恋爱|纯爱|成人向|R18|跑团|DND|TRPG|角色扮演|互动小说|剧情向|开放世界|高自由度|多线剧情|多结局|克苏鲁|赛博朋克|西幻|东方幻想/i; const themeUtilityWords=/UI|界面|按钮|面板|变量|状态栏|档案页|排行榜|排行|地图|立绘|正则|regex|CSS|HTML|手机|电脑|背包栏|系统流|系统规则|武功系统|战斗系统|数值|模板|协议|提示词|世界书|字数|作者|制作|修复|BUG|版本|V\\d+(?:\\.\\d+)*|百人|千种|张立绘/i; const state={reverse:{cachedUi:[]}}; const testElements={reverseAuditEnabled:{checked:false},reverseCharacterFocus:{value:''},reverseIncludeOutline:{checked:true}}; const $=id=>testElements[id]||({checked:false,value:''}); const reverseCrcTable=(()=>{const table=new Uint32Array(256);for(let index=0;index<256;index++){let value=index;for(let bit=0;bit<8;bit++)value=(value&1)?0xedb88320^(value>>>1):value>>>1;table[index]=value>>>0}return table})();\n${helperNames.map(extractFunction).join('\n')}\nreturn {${helperNames.join(',')},__state:state,__elements:testElements};`)();
+const helpers = new Function(`const VERSION='v0.1.2'; const uiWords=/样式|UI|面板|输出(?:内容)?规范|格式规范|生图|绘图提示|状态锚点|状态栏|美化|正则|regex|HTML|CSS|脚本|模板|协议|容器/i; const mechanicWords=/数值|调度|结局|节点|事件库|触发|好感|共鸣|羁绊|心魔|执念|善恶|时钟|系统规则|机制|进度条|倒计时|状态协议|铁律|原则|防OOC|防抢话|信息隔离|叙事规则|文风|描写|判定|黑箱/i; const referenceWords=/档案|资料库|百科|名录|出现顺序|事件顺序|完整主线|事件主线|主线细化|既定历史主线|怪兽|超兽|异生兽|魔女(?:\\s*\\/|$)|使魔|敌人顺序|生物档案|形态与|形态力量|形态分类|来源分类/i; const worldWords=/世界观|世界线|时间线(?:设定)?|时空|闭环|时间锚点|时代背景|历史背景|地理|地点|城市|大学|校园|交友圈|宗门|门派|势力|社会|组织结构|力量体系|修行体系|魔法体系|能量守恒|灵根|境界|寿元|天道因果|多元宇宙|宇宙分区|光之国|见泷原|灵魂宝石|魔女结界|文明/i; const settingTitleWords=/的设定\\s*$/i; const characterSettingWords=/设定(?:[（(][^）)]*[）)])?\\s*$/i; const nonCharacterSettingWords=/世界观|世界线|时间线|时空|大学|校园|交友圈|组织|体系|规则|机制|样式|格式|分支|灾难|场景|地点|社会|背景|路线|事件|主线|结局|资料库|档案/i; const explicitCharacter=/^(?:角色|人物|NPC|情敌)[：:·\\s]+/i; const entityWords=/魔女|使魔|怪兽|超兽|异生兽|魔兽|人工生命|生物档案/i; const plotPrefixWords=/(?:^|[|_])(?:MAIN_SPLIT|MAIN_PLOT|PLOT|STORY_OUTLINE|STORYLINE|CHAPTER_FLOW|CAMPAIGN|QUESTLINE)(?:[|_]|$)/i; const plotTitleWords=/整体主线大纲|主线大纲|故事大纲|剧情大纲|剧情总纲|章节流程总览|章节运行|章节大纲|战役大纲|篇章大纲|主线阶段|主线推进表|剧情阶段表/i; const plotChapterWords=/(?:序章|终章|第[一二三四五六七八九十百零\\d]+章)[：:·\\s_-].*(?:章节运行|剧情|大纲|流程|阶段)/i; const plotTemplateWords=/模板|助手|生成器|写作指南|格式规范|输出规范|提示词|占位符|正则/i; const remoteWords=/远程版|远程加载|联网远程|在线加载|服务器读取|实时读取数据|空壳角色卡|强需求联机|云端世界书|remote\\s*(?:card|loader|manifest)/i; const structuredCharacterWords=/^(?:[A-Z0-9]+_)?(?:NPC|CHAR|CHARACTER|COMPANION)[|_]/i; const themeCategoryWords=/武侠|仙侠|玄幻|奇幻|科幻|末世|都市|校园|历史|古风|江湖|综武|同人|悬疑|推理|冒险|战争|群像|恋爱|纯爱|成人向|R18|跑团|DND|TRPG|角色扮演|互动小说|剧情向|开放世界|高自由度|多线剧情|多结局|克苏鲁|赛博朋克|西幻|东方幻想/i; const themeUtilityWords=/UI|界面|按钮|面板|变量|状态栏|档案页|排行榜|排行|地图|立绘|正则|regex|CSS|HTML|手机|电脑|背包栏|系统流|系统规则|武功系统|战斗系统|数值|模板|协议|提示词|世界书|字数|作者|制作|修复|BUG|版本|V\\d+(?:\\.\\d+)*|百人|千种|张立绘/i; const state={reverse:{cachedUi:[]}}; const testElements={reverseAuditEnabled:{checked:false},reverseCharacterFocus:{value:''},reverseIncludeOutline:{checked:true}}; const $=id=>testElements[id]||({checked:false,value:''}); const reverseCrcTable=(()=>{const table=new Uint32Array(256);for(let index=0;index<256;index++){let value=index;for(let bit=0;bit<8;bit++)value=(value&1)?0xedb88320^(value>>>1):value>>>1;table[index]=value>>>0}return table})();\n${helperNames.map(extractFunction).join('\n')}\nreturn {${helperNames.join(',')},__state:state,__elements:testElements};`)();
 
 const openingHelpers = new Function(`const excludedLine=/^(?:←|返回|跳过|点击|开始阅读|继续|确认选择|选择你的|推荐行动|封面|状态栏|UI说明|复制身份档案|注入身份开始|第?\\s*\\d+\\s*项)\\s*.*$/i; const profileWords=/姓名|名字|身份|年龄|性别|种族|身高|体重|外貌|衣着|穿衣|性格|习惯|爱好|厌恶|背景|能力|战斗风格|人际关系|当前目标|时间线|降临坐标|身份来源|剧情记忆|灵魂宝石/i;\n${['safeText','normalizeLines','replaceUserPlaceholder','normalizeNarrative','looksLikeProfileText','stripOpeningUiMarkers','extractOpening'].map(extractFunction).join('\n')}\nreturn {stripOpeningUiMarkers,extractOpening};`)();
 
@@ -681,7 +700,7 @@ const acceptedByMoyunResolver = !!(
 );
 
 assert(acceptedByMoyunResolver, '不满足 Moyun resolveImportedBookData 的接收条件');
-assert(output._conversionStationVersion === 'v0.1.1', '转换器版本字段不正确');
+assert(output._conversionStationVersion === 'v0.1.2', '转换器版本字段不正确');
 assert(output.novel && typeof output.novel === 'object', '缺少 novel');
 assert(typeof output.novel.outline === 'string' && output.novel.outline.includes('亡灵天灾'), '角色卡剧情大纲没有写入 novel.outline');
 assert(Array.isArray(output.chapterOutlines) && output.chapterOutlines.length === 0, 'chapterOutlines 必须为空');
