@@ -4,6 +4,6 @@
   "private": true,
   "description": "Bidirectional converter for Moyun novel settings and RP-Hub or Tavern character cards, with chat log to novel conversion",
   "scripts": {
-    "test": "node tests/verify-output.mjs && node tests/chat-parsing-test.mjs && node tests/novel-import-test.mjs"
+    "test": "node tests/verify-output.mjs && node tests/chat-parsing-test.mjs && node tests/novel-import-test.mjs && node tests/distill-test.mjs"
   }
 }

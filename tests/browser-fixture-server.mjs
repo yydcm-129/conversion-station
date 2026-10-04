@@ -39,6 +39,9 @@ const fixtureChatNovel = {
   ]
 };
 
+const distillGuide = '# 写作风格指南\n## 风格概述\n短句为主，冷峻克制，情绪藏在动作里。\n## 核心特点\n叙事视角是第三人称限制视角；语言风格凝练，少用成语；对话简短，常以动作收尾；描写手法偏白描。\n## 特色表达\n以雾、潮汐、灯塔光作为情绪载体；用器物细节代替心理描写。\n## 写作示例\n### 推荐写法\n他把灯芯捻亮，雾从门缝里退开。\n### 避免写法\n他的心情非常复杂，充满了许多难以言说的情绪。\n## 注意事项\n保持短句节奏；避免直接解释人物情绪。';
+const distillMergedGuide = '# 写作风格指南\n## 风格概述\n合并后的冷峻指南，短句与白描并存。\n## 核心特点\n短句节奏；白描描写；对话以动作收尾。\n## 特色表达\n雾与灯。\n## 写作示例\n### 推荐写法\n雾退开，灯还亮着。\n### 避免写法\n他心中有千言万语难以表达。\n## 注意事项\n冲突取舍以第一份指南优先。';
+
 function send(response, status, type, body) {
   response.writeHead(status, { 'Content-Type': type, 'Cache-Control': 'no-store' });
   response.end(body);
@@ -72,6 +75,10 @@ const server = http.createServer((request, response) => {
       const isPlanStep = isChatNovel && sys.includes('第 1 步：规划');
       const isChapterStep = isChatNovel && sys.includes('第 2 步：写正文');
       const isCharactersStep = isChatNovel && sys.includes('第 3 步：整合角色');
+      const isDistill = sys.includes('文学风格分析师');
+      const isDistillRetry = isDistill && sys.includes('你上一次的输出不符合要求');
+      const userContent = (() => { try { const messages = JSON.parse(body).messages || []; return messages.filter(m => m.role === 'user').map(m => String(m.content || '')).join('\n'); } catch { return ''; } })();
+      const isDistillMerge = isDistill && userContent.includes('合并为一份总指南');
       let content;
       if (isForwardPlan) {
         content = JSON.stringify({ title: '灯塔夜话', theme: '守望与羁绊', synopsis: '守塔人与侦探的故事。', characterGroups: [
@@ -97,6 +104,10 @@ const server = http.createServer((request, response) => {
         content = JSON.stringify({ title: chapter.title, content: chapter.content });
       } else if (isCharactersStep) {
         content = JSON.stringify({ characters: fixtureChatNovel.characters });
+      } else if (isDistillMerge) {
+        content = JSON.stringify({ name: '雾港冷峻体（合并）', guide: distillMergedGuide });
+      } else if (isDistill) {
+        content = JSON.stringify({ name: isDistillRetry ? '雾港冷峻体（重试）' : '雾港冷峻体', guide: distillGuide });
       } else if (isChatNovel) {
         content = JSON.stringify(fixtureChatNovel);
       } else {
