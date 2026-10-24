@@ -1,10 +1,19 @@
 # 转换空间站
 
-当前版本：`v0.1.4`
+当前版本：`v0.1.5`
 
-`转换空间站.html` 是一个自包含、无需安装依赖的双向浏览器工具。它既能把 SillyTavern V1/V2/V3、TavernAI、RP-Hub、RisuAI、Agnai 等主流酒馆角色卡整理为 Moyun 小说设定，也能让用户自己的 AI 把 Moyun JSON/TXT 小说资料转换成可编辑、可导出的角色卡。v0.1.1 新增“聊天记录 → 小说”模式：导入 RP-Hub 聊天导出与对应角色卡，自动剥离 UI 数值块与思维链，把整理好的回合材料交给用户自己的 AI 写成墨韵格式小说。v0.1.2 新增“成品小说 → 可编辑小说”模式：导入 TXT/EPUB/Moyun JSON 成品小说，本地切分章节后可编辑、可让 AI 通读全书提取角色与设定，再导出 Moyun JSON / TXT / EPUB 三种格式。v0.1.3 按知轩藏书等精校 TXT 下载站的真实文件形态优化导入（作者识别、头部广告行清理、卷结构提取），并新增跨模式文件类型识别：把聊天记录、角色卡或小说错放进其他模式区块时，自动弹出确认弹窗询问是否跳转到对应模式重新导入。v0.1.4 新增第五模式“文风样本 → 文风指南”（文风蒸馏）：借鉴墨韵文风蒸馏器逆向笔记的 OpenWrite 蒸馏方案，把成品小说或聊天记录的 AI 楼层蒸馏成一份防复述的写作风格指南（Markdown + frontmatter），可粘贴进墨韵“文风设置”作为自定义文风。
+`转换空间站.html` 是一个自包含、无需安装依赖的双向浏览器工具。它既能把 SillyTavern V1/V2/V3、TavernAI、RP-Hub、RisuAI、Agnai 等主流酒馆角色卡整理为 Moyun 小说设定，也能让用户自己的 AI 把 Moyun JSON/TXT 小说资料转换成可编辑、可导出的角色卡。v0.1.1 新增“聊天记录 → 小说”模式：导入 RP-Hub 聊天导出与对应角色卡，自动剥离 UI 数值块与思维链，把整理好的回合材料交给用户自己的 AI 写成墨韵格式小说。v0.1.2 新增“成品小说 → 可编辑小说”模式：导入 TXT/EPUB/Moyun JSON 成品小说，本地切分章节后可编辑、可让 AI 通读全书提取角色与设定，再导出 Moyun JSON / TXT / EPUB 三种格式。v0.1.3 按知轩藏书等精校 TXT 下载站的真实文件形态优化导入（作者识别、头部广告行清理、卷结构提取），并新增跨模式文件类型识别：把聊天记录、角色卡或小说错放进其他模式区块时，自动弹出确认弹窗询问是否跳转到对应模式重新导入。v0.1.4 新增第五模式“文风样本 → 文风指南”（文风蒸馏）：借鉴墨韵文风蒸馏器逆向笔记的 OpenWrite 蒸馏方案，把成品小说或聊天记录的 AI 楼层蒸馏成一份防复述的写作风格指南（Markdown + frontmatter），可粘贴进墨韵“文风设置”作为自定义文风。v0.1.5 新增第六模式“老版小说 → 新版迁移”：把老版 RP-Hub「小说生成」的书库 JSON / 单书 JSON / 导出 TXT 本地转换为可直接导入新版墨韵的书籍 JSON——老版书库直接导入新版只会保留一本，本模式逐本转换补齐新版必需字段，并保留章节摘要与书评。
 
 ## 主要能力
+
+### 老版小说 → 新版迁移（v0.1.5 新增）
+
+- **解决的实际问题**：老版 RP-Hub 书库 JSON（IndexedDB 键 `rp_hub_novel_library`）直接导入新版墨韵时，新版只挑出当前书或第一本，其余书静默丢弃；老版章节缺 id / branchId / versions / createdAt 等新版必需字段。
+- **三种输入**：老版书库 JSON（多本书 → 书架逐本列出）、老版单书 JSON、老版导出 TXT（`===========================` 主分隔线 + 角色卡汇总 + 剧情摘要汇总，摘要自动回填对应章节）。
+- **本地转换、零 AI、零网络**：每本书一键导出为新版墨韵书籍 JSON（`_exportVersion 9`）——章节补齐全部必需字段、字数重算、主线分支建立、角色补默认字段、novel 补 theme/synopsis/outline/volumes 空位（不虚构内容）；章节摘要与 AI 虚构书评原样带入（新版书评字段同构，补 isLiked）。
+- **逐本导出**：支持单书导出与“逐本导出全部书籍”（新版墨韵一次只导入一本）；导出前有完整 JSON 预览。
+- **密钥隔离**：老版 `globalSettings`（含 API Key）与 `localSettings` 不进入导出结果（测试断言兜底）。
+- **错放引导**：新版墨韵 JSON 放入本模式会弹窗说明“可直接在墨韵导入，无需转换”；角色卡、普通小说 TXT、聊天 TXT 分别引导到对应模式。
 
 ### 文风样本 → 文风指南（v0.1.4 新增）
 
@@ -243,6 +252,10 @@ https://cdn.sta1n.cn/v1
 - `TEST_REPORT_v0.1.4.md`：文风蒸馏（提示词/防复述/分块/样本判别/聊天清洗）函数级测试、蒸馏浏览器探针 26 项与全套回归报告。
 - `SECURITY_AUDIT_v0.1.4.md`：本版蒸馏出站边界（样本仅内存、防复述校验、合并只发指南）与密钥安全审计。
 - `RELEASE_REPORT_v0.1.4.md`：本版范围、回滚点、只读参考和封版结论。
+- `V015_PLAN.md`：v0.1.5 老版小说迁移的模式设计（老版数据结构、新版导入端核对、转换映射与不变量）。
+- `TEST_REPORT_v0.1.5.md`：老版书库/TXT 判别、老版解析、字段补齐、书评迁移、新版校验对齐的函数级测试与浏览器探针 31 项报告。
+- `SECURITY_AUDIT_v0.1.5.md`：本版纯本地转换、老版 globalSettings/localSettings（含 API Key）整树丢弃的密钥隔离审计。
+- `RELEASE_REPORT_v0.1.5.md`：本版范围、回滚点、只读参考和封版结论。
 - `tests/verify-output.mjs`：HTML 与生成 JSON 的结构检查脚本。
 - `tests/chat-parsing-test.mjs`：聊天解析逻辑对六份真实样本的回归测试。
 - `tests/chat-mode-probe.mjs`：聊天模式浏览器端到端探针（需本地夹具服务）。
@@ -250,6 +263,8 @@ https://cdn.sta1n.cn/v1
 - `tests/novel-mode-probe.mjs`：第四模式浏览器端到端探针（模式切换/导入/作者输入框/清理提示/错放跳转弹窗/章节编辑/EPUB 下载/AI 门禁/主题切换）。
 - `tests/distill-test.mjs`：文风蒸馏函数级测试（蒸馏提示词与参数钳制、防复述校验、分块蒸馏、角色卡判别、聊天样本清洗）。
 - `tests/distill-mode-probe.mjs`：第五模式浏览器端到端探针（自包含夹具服务；粘贴守卫/聊天 JSONL 导入/错放弹窗/蒸馏端到端/.md 下载/删除守卫）。
+- `tests/legacy-novel-test.mjs`：老版小说迁移函数级测试（书库/单书/TXT 判别、老版 TXT 解析、章节字段补齐、书评迁移、新版 validateBookPayload 对齐、密钥不泄露）。
+- `tests/legacy-mode-probe.mjs`：第六模式浏览器端到端探针（自包含；书库多本导入/导出预览与真实下载/TXT 摘要与角色卡/新版 JSON 与角色卡错放弹窗）。
 - `tests/browser-fixture-server.mjs`：本地静态页面与模拟 Chat Completions 测试服务（含蒸馏假 AI 路由），不含真实密钥。
 - `tests/mobile-ui-probe.mjs` / `tests/mobile-reverse-probe.mjs`：手机窗口尺寸浏览器探针（正向弹窗、触控、布局溢出与反向分类流程），需本地夹具服务。
 - `test-output/`：本地测试产物目录，其中 JSON 默认不加入 Git。
@@ -279,6 +294,12 @@ node tests/novel-mode-probe.mjs
 
 ```bash
 node tests/distill-mode-probe.mjs
+```
+
+第六模式（老版小说迁移）浏览器端到端探针（自包含，内部起本地静态服务）：
+
+```bash
+node tests/legacy-mode-probe.mjs
 ```
 
 正向/反向分批生成探针（验证三阶段流水线与合并结果）：

@@ -1,5 +1,24 @@
 # 变更记录
 
+## v0.1.5 — 2026-10-24
+
+### 第六模式「老版小说 → 新版迁移」
+
+- **问题**：实读老版 RP-Hub「小说生成」（`RP-Hub-reference/novel/index.html`）与新版墨韵 v0.0.18 导入端（`resolveImportedBookData`）确认——老版书库 JSON（IndexedDB 键 `rp_hub_novel_library`，`{version:1, currentBookId, globalSettings, books:[…]}`）直接导入新版时只挑出当前书或第一本，**其余书静默丢弃**；老版章节缺 id/branchId/versions/activeVersionIdx/createdAt/paragraphComments，角色只有 {id:数字, name, desc}。
+- **三种输入（本地判别）**：老版书库 JSON（多本书 → 书架逐本列出，只收老版书）、老版单书 JSON、老版导出 TXT（`parseLegacyNovelTxt` 按老版 `parseAndLoadImportedContent` 同规则移植：主分隔线切头/正文，角色卡汇总转角色，剧情摘要汇总按"第 N 章"回填章节 summary）。判别规则：老版书章节无 id/branchId/versions 且 novel 无 theme/synopsis/outline 键——新版墨韵书（含全量备份）不会被误判。
+- **本地转换（零 AI、零网络）**：`convertLegacyNovelBook` 补齐新版全部必需字段（id/branchId:'main'/versions/activeVersionIdx/createdAt/paragraphComments/showComments），字数去空白重算，标题缺失回退"第N章"；章节摘要与 AI 虚构书评一并迁移（实读新版书评生成代码确认字段同构，补 isLiked:false，无内容书评过滤）；角色补默认字段；novel 补 theme/synopsis/outline/volumes 空位（不虚构）；主线 branchList；`_type`/`_exportVersion:9`/`_conversionStationVersion` 与站内其他导出一致，整体过 sanitizeOutputValue。
+- **导出**：单书"导出此书"（`书名_新版墨韵.json`）+ "逐本导出全部书籍"（350ms 间隔逐个下载；墨韵一次只导入一本）；导出前完整 JSON 预览。
+- **密钥隔离**：老版 `globalSettings`（含 apiProviderKeys 密钥）与 `localSettings` 整树丢弃，不进入导出（函数级与探针双重断言）。
+- **错放引导（zone='legacy'，第六入口）**：新版墨韵 JSON → 弹窗"可直接在墨韵导入，无需转换"并建议成品小说模式；角色卡 → 正向模式；普通小说/聊天 TXT → 对应模式。
+- 既有五模式零改动（仅 setConversionMode 增分支）；版本号四处同步 v0.1.5。
+
+### 测试
+
+- `tests/legacy-novel-test.mjs`（新建，加入 npm test 五链）：12 函数沙箱单行提取；10 用例组——老版/新版/异常判别、书库判定、TXT 解析（标题/世界观/负面词/章节/摘要回填/角色卡）、书评迁移、新版 validateBookPayload 逐条对齐、字段补齐、元数据与字数一致、密钥不泄露、新版全量备份不误判。
+- `tests/legacy-mode-probe.mjs`（新建，自包含）：31 项浏览器端到端——模式切换、书库 2 本导入、导出预览字段补齐与密钥不泄露、真实下载文件校验、逐本导出、TXT 摘要与角色卡、新版 JSON/角色卡两类错放弹窗。
+- `tests/verify-output.mjs`：+11 条 v0.1.5 断言；`offerFileKindRedirect` 入口计数 ≥6；夹具升级 `story-outline-output-v0.1.5.json`；版本断言更新 v0.1.5。
+- 全套回归：`npm test` 五链 + legacy 探针 31 项 + 既有 5 个浏览器探针全部通过。
+
 ## v0.1.4 — 2026-10-04
 
 ### 第五模式「文风样本 → 文风指南」（文风蒸馏）
