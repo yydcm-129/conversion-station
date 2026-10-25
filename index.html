@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>转换空间站 · Conversion Station — 墨韵配套格式转换工作台</title>
+<meta name="description" content="墨韵（Moyun）配套工具：把酒馆角色卡、RP-Hub 聊天记录、成品小说 TXT/EPUB、老版 RP-Hub 小说数据，转换成墨韵可直接导入的格式。全程浏览器本地完成。">
+<style>
+:root{
+  --bg:#070b12;--bg2:#0b111c;--panel:rgba(255,255,255,.045);--border:rgba(255,255,255,.1);
+  --text:#e8eef7;--muted:#93a3b8;--accent:#55d9ff;--accent2:#7c9cff;--good:#4ade80;
+}
+:root[data-theme="light"]{--bg:#f3f6fb;--bg2:#ffffff;--panel:rgba(9,20,40,.04);--border:rgba(9,20,40,.12);--text:#12203a;--muted:#5a6b83}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--bg);color:var(--text);font-family:"Segoe UI","Microsoft YaHei",system-ui,sans-serif;line-height:1.7;min-height:100vh}
+.wrap{max-width:1080px;margin:0 auto;padding:0 22px}
+header{position:sticky;top:0;z-index:10;backdrop-filter:blur(14px);background:color-mix(in srgb,var(--bg) 82%,transparent);border-bottom:1px solid var(--border)}
+.nav{display:flex;align-items:center;gap:14px;padding:14px 0}
+.brand{font-size:19px;font-weight:700;letter-spacing:.5px}
+.brand span{color:var(--accent)}
+.nav a.btn{margin-left:auto;text-decoration:none}
+.btn{display:inline-flex;align-items:center;gap:8px;border:1px solid var(--border);background:var(--panel);color:var(--text);padding:10px 18px;border-radius:11px;font-size:14.5px;cursor:pointer;transition:.18s}
+.btn:hover{border-color:var(--accent);color:var(--accent)}
+.btn.primary{background:linear-gradient(135deg,var(--accent),var(--accent2));border:none;color:#04121e;font-weight:700}
+.btn.primary:hover{filter:brightness(1.1);color:#04121e}
+.hero{padding:74px 0 46px;text-align:center}
+.hero h1{font-size:44px;line-height:1.25;letter-spacing:1px}
+.hero h1 b{background:linear-gradient(135deg,var(--accent),var(--accent2));-webkit-background-clip:text;background-clip:text;color:transparent}
+.hero p.lead{max-width:780px;margin:20px auto 0;color:var(--muted);font-size:17px}
+.hero .cta{display:flex;gap:14px;justify-content:center;margin-top:32px;flex-wrap:wrap}
+.badge-line{margin-top:22px;display:flex;gap:10px;justify-content:center;flex-wrap:wrap}
+.chip{font-size:12.5px;color:var(--muted);border:1px solid var(--border);border-radius:999px;padding:5px 13px;background:var(--panel)}
+.chip b{color:var(--good)}
+section{padding:44px 0}
+h2.sec{font-size:26px;margin-bottom:8px}
+p.sec-sub{color:var(--muted);max-width:760px;margin-bottom:26px}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(310px,1fr));gap:16px}
+.card{background:var(--panel);border:1px solid var(--border);border-radius:16px;padding:22px}
+.card h3{font-size:17px;margin-bottom:8px}
+.card h3 .ico{margin-right:9px}
+.card p{color:var(--muted);font-size:14.5px}
+.card .tag{display:inline-block;margin-top:12px;font-size:12px;color:var(--accent);border:1px solid color-mix(in srgb,var(--accent) 40%,transparent);border-radius:999px;padding:2px 11px}
+.steps{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:16px;counter-reset:step}
+.step-card{background:var(--panel);border:1px solid var(--border);border-radius:16px;padding:22px;position:relative}
+.step-card::before{counter-increment:step;content:"0" counter(step);font-size:30px;font-weight:800;color:var(--accent);opacity:.85}
+.step-card h3{font-size:16px;margin:8px 0 6px}
+.step-card p{color:var(--muted);font-size:14px}
+.timeline{border-left:2px solid var(--border);margin-left:8px;padding-left:24px;display:flex;flex-direction:column;gap:18px}
+.tl-item{position:relative}
+.tl-item::before{content:"";position:absolute;left:-31px;top:9px;width:10px;height:10px;border-radius:50%;background:var(--accent)}
+.tl-item .v{font-weight:700;color:var(--accent);margin-right:10px}
+.tl-item .d{color:var(--muted);font-size:14.5px}
+.privacy{background:linear-gradient(135deg,color-mix(in srgb,var(--accent) 9%,transparent),color-mix(in srgb,var(--accent2) 9%,transparent));border:1px solid var(--border);border-radius:16px;padding:24px 26px}
+.privacy h3{margin-bottom:8px}
+.privacy p{color:var(--muted);font-size:14.5px;max-width:820px}
+footer{border-top:1px solid var(--border);padding:30px 0 40px;color:var(--muted);font-size:13.5px;text-align:center}
+footer a{color:var(--accent);text-decoration:none}
+@media(max-width:640px){.hero h1{font-size:32px}.hero{padding:52px 0 34px}}
+</style>
+</head>
+<body>
+<header>
+  <div class="wrap nav">
+    <div class="brand">转换<span>空间站</span></div>
+    <a class="btn" href="https://github.com/yydcm129/conversion-station" target="_blank" rel="noopener">GitHub 源码</a>
+    <a class="btn primary" href="./转换空间站.html">打开转换工具 →</a>
+  </div>
+</header>
+
+<div class="wrap">
+  <div class="hero">
+    <h1>把一切小说资料，<b>搬进墨韵</b></h1>
+    <p class="lead">转换空间站是<b>墨韵（Moyun）小说工作台的配套转换器</b>：酒馆角色卡、RP-Hub 聊天记录、成品小说 TXT/EPUB、老版 RP-Hub 小说数据……凡是墨韵之外的格式，都由它转换成墨韵可以直接导入的书籍 JSON / TXT / EPUB，然后放进墨韵继续创作。</p>
+    <div class="cta">
+      <a class="btn primary" href="./转换空间站.html">立即使用（浏览器直接打开）</a>
+      <a class="btn" href="https://github.com/yydcm129/conversion-station" target="_blank" rel="noopener">查看源码与文档</a>
+    </div>
+    <div class="badge-line">
+      <span class="chip"><b>●</b> 全程本地处理，正文不上传</span>
+      <span class="chip">零依赖 · 单文件 HTML</span>
+      <span class="chip">Windows / macOS / 手机浏览器通用</span>
+      <span class="chip">5 条测试链 + 8 个端到端探针</span>
+    </div>
+  </div>
+
+  <section>
+    <h2 class="sec">为什么需要它</h2>
+    <p class="sec-sub">墨韵专注创作本身，而你的素材散落在各种生态里：酒馆的角色卡是 JSON/PNG，RP-Hub 的聊天记录是 JSONL，下载站精校小说是 TXT/EPUB，老版本的旧书还躺在旧数据里。转换空间站只做一件事——<b style="color:var(--text)">把这些格式变成墨韵认识的样子</b>，让"搬书"这一步不丢数据、不费手工。</p>
+    <div class="grid">
+      <div class="card"><h3><span class="ico">🎭</span>角色卡 → 小说设定</h3><p>支持 SillyTavern V1/V2/V3、TavernAI、RP-Hub、RisuAI、Agnai 的 JSON 与 PNG 卡（含世界书上千条目），自动分类筛选后整理为墨韵角色设定与剧情大纲。</p><span class="tag">正向转换 · 可选 AI 精修</span></div>
+      <div class="card"><h3><span class="ico">📖</span>聊天记录 → 小说</h3><p>导入 RP-Hub 分支聊天导出，自动剥离思维链、状态栏与 UI 数值块，按回合整理成章节材料，交给你的 AI 写成墨韵格式小说。</p><span class="tag">长文分批 · 系统楼层</span></div>
+      <div class="card"><h3><span class="ico">📚</span>成品小说 → 可编辑小说</h3><p>TXT / EPUB / 墨韵 JSON 一键导入，智能切分章节、识别书名作者与卷结构，兼容知轩藏书等精校下载站的文件形态，AI 精读只提取既有设定、绝不改写正文。</p><span class="tag">导出 JSON / TXT / EPUB</span></div>
+      <div class="card"><h3><span class="ico">↩️</span>小说设定 → 角色卡</h3><p>反向通道：把墨韵书籍 JSON/TXT 还原为七种主流酒馆卡格式，支持 PNG 角色卡封装与独立 UI 包缓存。</p><span class="tag">七种格式 · 双向回读</span></div>
+      <div class="card"><h3><span class="ico">🖋️</span>文风样本 → 文风指南</h3><p>借鉴墨韵文风蒸馏方案，把小说正文或聊天 AI 楼层蒸馏成防复述的写作风格指南（Markdown），可直接粘贴进墨韵"文风设置"。</p><span class="tag">40 字防复述校验</span></div>
+      <div class="card"><h3><span class="ico">📦</span>老版小说 → 新版迁移</h3><p>老版 RP-Hub「小说生成」的书库 JSON / 导出 TXT，逐本转换为新版墨韵书籍 JSON——补齐章节必需字段，保留摘要与书评，老版密钥数据绝不带出。</p><span class="tag">多本书逐本导出</span></div>
+    </div>
+  </section>
+
+  <section>
+    <h2 class="sec">三步上手</h2>
+    <div class="steps">
+      <div class="step-card"><h3>导入素材</h3><p>拖入文件，或直接粘贴文本。放错区块会自动识别文件类型并询问是否跳转。</p></div>
+      <div class="step-card"><h3>检查与转换</h3><p>本地整理或调用你自己的 AI 接口精修；进度分步可见，随时可停。</p></div>
+      <div class="step-card"><h3>导入墨韵</h3><p>导出墨韵 JSON / TXT / EPUB，在墨韵「导入 JSON」中选入即可继续创作。</p></div>
+    </div>
+  </section>
+
+  <section>
+    <div class="privacy">
+      <h3>🔒 隐私与安全边界</h3>
+      <p>所有解析与转换都在你的浏览器里完成；只有当你主动点击生成类按钮时，对应的预览材料才会发送到<b style="color:var(--text)">你自己配置的 AI 接口</b>。API Key 默认只保存在页面内存中，保存接口设置也不会写入密钥；老版书库里的 globalSettings（含密钥）在迁移时整树丢弃。角色卡 UI 预览运行在无脚本、无网络的沙箱里。</p>
+    </div>
+  </section>
+
+  <section>
+    <h2 class="sec">版本时间线</h2>
+    <div class="timeline">
+      <div class="tl-item"><span class="v">v0.1.5</span><span class="d">第六模式「老版小说 → 新版迁移」：老版 RP-Hub 书库/单书 JSON、导出 TXT 逐本转为新版墨韵 JSON。</span></div>
+      <div class="tl-item"><span class="v">v0.1.4</span><span class="d">第五模式「文风样本 → 文风指南」：防复述蒸馏，产出可直接粘贴进墨韵文风设置的 Markdown 指南。</span></div>
+      <div class="tl-item"><span class="v">v0.1.3</span><span class="d">下载站 TXT 适配（作者识别/广告行清理/卷结构）+ 跨模式文件类型识别与错放跳转。</span></div>
+      <div class="tl-item"><span class="v">v0.1.2</span><span class="d">EPUB 导出、AI 精读流水线、墨韵 v0.0.16 兼容核对。</span></div>
+      <div class="tl-item"><span class="v">v0.1.1</span><span class="d">「聊天记录 → 小说」模式：五种 UI 数值块剥离、分批生成、双主题。</span></div>
+      <div class="tl-item"><span class="v">v0.1.0</span><span class="d">四种基础转换链路成型：角色卡 ↔ 小说设定、Moyun v0.0.13 字段兼容。</span></div>
+    </div>
+  </section>
+</div>
+
+<footer>
+  <div class="wrap">
+    制作者 <b>yydcm129</b> · 与墨韵（Moyun）小说工作台配合使用 · 在线地址 <a href="https://yydcm129.github.io/conversion-station/">yydcm129.github.io/conversion-station</a>
+  </div>
+</footer>
+</body>
+</html>
